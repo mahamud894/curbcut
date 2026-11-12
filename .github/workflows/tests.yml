@@ -1,0 +1,65 @@
+name: tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+
+      - name: Tests
+        run: ./vendor/bin/pest
+
+      - name: Scanner smoke test (real Chrome + axe-core)
+        run: |
+          python3 -m http.server 8811 --directory tests/fixtures/site &
+          sleep 1
+          echo '{"urls":["http://127.0.0.1:8811/","http://127.0.0.1:8811/about.html"]}' \
+            | CURBCUT_CHROME_PATH="$(command -v google-chrome)" node scanner/scan.mjs > scan.jsonl
+          cat scan.jsonl
+          node -e '
+            const lines = require("fs").readFileSync("scan.jsonl", "utf8").trim().split("\n").map(JSON.parse);
+            const home = lines.find(l => l.url.endsWith(":8811/"));
+            const ids = home.violations.map(v => v.id);
+            for (const rule of ["image-alt", "button-name", "label", "html-has-lang"]) {
+              if (!ids.includes(rule)) { console.error("Expected violation missing: " + rule); process.exit(1); }
+            }
+            const about = lines.find(l => l.url.endsWith("about.html"));
+            if (about.status !== "ok" || about.violations.length !== 0) { console.error("about.html should be clean"); process.exit(1); }
+            console.log("Scanner found", ids.length, "rule violations on the fixture as expected.");
+          '
