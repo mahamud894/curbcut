@@ -57,7 +57,8 @@ RUN chmod +x /usr/local/bin/curbcut-entrypoint \
  && mkdir -p /data storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
  && chown -R www-data:www-data /data storage bootstrap/cache
 
-ENV APP_ENV=production \
+ENV APP_NAME=Curbcut \
+    APP_ENV=production \
     APP_DEBUG=false \
     LOG_CHANNEL=stderr \
     DB_CONNECTION=sqlite \
