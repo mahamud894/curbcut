@@ -12,6 +12,8 @@ const tabs = [
     { label: 'Overview', suffix: '' },
     { label: 'Issues', suffix: '/issues' },
     { label: 'Pages', suffix: '/pages' },
+    { label: 'Checklist', suffix: '/checklist' },
+    { label: 'Statement', suffix: '/statement' },
     { label: 'Settings', suffix: '/settings' },
 ];
 
@@ -98,7 +100,7 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
                     <ul className="-mb-px flex gap-1 overflow-x-auto">
                         {tabs.map((tab) => {
                             const href = `${base}${tab.suffix}`;
-                            const isCurrent = currentPath === href;
+                            const isCurrent = tab.suffix === '/issues' ? currentPath.startsWith(href) : currentPath === href;
                             return (
                                 <li key={tab.label}>
                                     <Link

@@ -105,7 +105,14 @@ export default function SitesIndex({ sites, totals }: Props) {
                                             >
                                                 <ScoreRing score={done?.score ?? null} size={72} />
                                                 <div className="min-w-0 flex-1">
-                                                    <h3 className="truncate font-semibold">{site.name}</h3>
+                                                    <h3 className="truncate font-semibold">
+                                                        {site.name}
+                                                        {site.shared && (
+                                                            <span className="text-muted-foreground ml-2 rounded border px-1.5 py-0.5 align-middle text-xs font-medium">
+                                                                Shared with you
+                                                            </span>
+                                                        )}
+                                                    </h3>
                                                     <p className="text-muted-foreground truncate text-sm">{site.url}</p>
                                                     <p className="mt-2 text-sm">
                                                         {done ? (

@@ -6,9 +6,11 @@ use Database\Factories\SiteFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class Site extends Model
 {
@@ -27,6 +29,37 @@ class Site extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    /** The owner plus everyone added as a member. */
+    public function team(): Collection
+    {
+        return collect([$this->user])->merge($this->members)->filter()->unique('id')->values();
+    }
+
+    public function hasMember(User $user): bool
+    {
+        return $this->user_id === $user->id || $this->members()->whereKey($user->id)->exists();
+    }
+
+    public function checklistItems(): HasMany
+    {
+        return $this->hasMany(ChecklistItem::class);
+    }
+
+    public function statement(): HasOne
+    {
+        return $this->hasOne(Statement::class);
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(Activity::class);
     }
 
     public function pages(): HasMany

@@ -12,11 +12,11 @@ Curbcut scans your websites against WCAG 2.2 AA with [axe-core](https://github.c
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![WCAG](https://img.shields.io/badge/WCAG-2.2_AA-0e7490)
 
-<img src="docs/screenshots/overview.png" alt="Curbcut site overview showing an accessibility score of 88, open issues by impact, the score trend and the most common problems" width="900">
+<img src="docs/screenshots/overview.png" alt="Curbcut site overview with the accessibility score, open issues by impact, the most common problems, scan history and recent team activity" width="900">
 
 </div>
 
-> **Status:** early development. Phase 1 (scanning, issue tracking and the dashboard) works today. See the [roadmap](#roadmap) for what comes next.
+> **Status:** early development. Scanning, issue tracking, the team workflow, the WCAG checklist and accessibility statements work today. See the [roadmap](#roadmap) for what comes next.
 
 ## Why Curbcut?
 
@@ -35,17 +35,26 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 - **Accessibility score and trend.** A simple, documented 0–100 score per site and its history over time.
 - **Issue explorer.** Issues grouped by problem and page, filterable by impact, page, status and text, each with the failing element, the WCAG success criterion and how to fix it.
 - **Scheduled scans.** Daily or weekly scans run automatically; manual scans are one click away.
+- **Team workflow.** Add colleagues to a site, assign issues one by one, in bulk or for a whole problem at once, set due dates, discuss in comments and get an email when something is assigned to you.
+- **Dismiss with a reason.** Mark false positives or accepted risks with a justification. Dismissed issues stay dismissed on later scans and don't count towards the score.
+- **Manual WCAG 2.2 checklist.** All 55 level A and AA success criteria, each with pass, fail or not applicable, notes and evidence, the reviewer and date, links to the W3C Understanding docs, and the open automated issues for that criterion.
+- **Accessibility statement.** Generated from the checklist and the latest scan, following the structure of the EU model statement: conformance status, known limitations, feedback and contact, enforcement procedure and how the site was assessed. Publish it as a public page that updates itself.
+- **Audit trail.** Every assignment, dismissal, comment, checklist result and statement change is recorded with who did it and when.
 - **Safe by default.** Private and local network addresses are blocked unless you allow them, to prevent server-side request forgery.
 - **Accessible itself.** Curbcut's own screens are checked with axe-core and pass its WCAG 2.2 AA and best-practice rules.
 
-| Issues | Mobile |
+| Issue list with bulk actions | Issue workflow |
 | --- | --- |
-| <img src="docs/screenshots/issues.png" alt="Issue list grouped by problem, with one issue expanded to show the failing HTML element, how to fix it and the WCAG criterion" width="560"> | <img src="docs/screenshots/mobile.png" alt="The issue list on a phone-sized screen" width="230"> |
+| <img src="docs/screenshots/issues.png" alt="Issue list grouped by problem, with two issues selected and the bulk assign bar open" width="440"> | <img src="docs/screenshots/issue-workflow.png" alt="A single issue with the failing element, how to fix it, the WCAG criterion, assignee and due date, comments and history" width="440"> |
+
+| WCAG checklist | Public accessibility statement |
+| --- | --- |
+| <img src="docs/screenshots/checklist.png" alt="The WCAG 2.2 checklist with progress, filters and pass, fail and not applicable buttons for each success criterion" width="440"> | <img src="docs/screenshots/statement-public.png" alt="The public accessibility statement page listing conformance status, known limitations, contact details and how the site was assessed" width="440"> |
 
 ## Roadmap
 
 - [x] **Phase 1 — Scan and track:** site management, page discovery, axe-core scanner, new/fixed comparison, score, dashboard, scheduled scans
-- [ ] **Phase 2 — Compliance workflow:** assign issues with due dates and comments, manual WCAG checklist for what machines can't test, accessibility statement generator with a public page
+- [x] **Phase 2 — Compliance workflow:** site members, assign issues with due dates and comments, dismiss with justification, manual WCAG 2.2 checklist, accessibility statement generator with a public page, audit trail
 - [ ] **Phase 3 — Ready for teams:** PDF audit reports, organisations and agency mode with many clients, one-command Docker install, documentation site
 - [ ] **Phase 4 — Developer workflow:** GitHub Action that fails pull requests on new issues, REST API, optional AI fix suggestions, translations
 
@@ -66,7 +75,17 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 3. **Recording.** Every failing element becomes an issue with a fingerprint of `site + page + rule + selector`. Issues seen again stay open; issues no longer found on a page that scanned successfully are marked fixed. Pages that fail to load never mark anything as fixed.
 4. **Scoring.** Each scanned page starts at 100 and loses 10 points per critical, 5 per serious, 2 per moderate and 1 per minor open issue (minimum 0). The site score is the average across pages.
 
-> Automated tools find roughly a third of accessibility problems. Curbcut's score shows progress on what machines can detect; it is not a certificate of WCAG conformance. The manual checklist in Phase 2 covers the rest.
+> Automated tools find only part of the accessibility problems on a site. Curbcut's score shows progress on what machines can detect; it is not a certificate of WCAG conformance. That is what the manual checklist is for.
+
+### Conformance status
+
+The accessibility statement suggests a status from your data:
+
+- **Fully conformant:** every WCAG 2.2 A/AA criterion is reviewed and passes (or is not applicable), and no automated issues are open.
+- **Not conformant:** more than half of the applicable criteria are failing.
+- **Partially conformant:** everything in between.
+
+A criterion with open automated issues counts as failing even if the checklist says it passes. If an external auditor has assessed the site, you can set the status yourself.
 
 ## Getting started
 
@@ -104,6 +123,8 @@ php artisan schedule:work  # queues daily and weekly scans
 For development, `composer dev` starts the web server, queue worker, log viewer and Vite together.
 
 Open the app, create an account, click **Add site** and enter a URL. The first scan starts right away.
+
+Assignment emails use Laravel's mail settings (`MAIL_*` in `.env`). By default they are written to the log; configure SMTP to send them for real, and keep the queue worker running so they are delivered.
 
 ### Configuration
 

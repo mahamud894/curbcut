@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -51,5 +52,12 @@ class User extends Authenticatable
     public function sites(): HasMany
     {
         return $this->hasMany(Site::class);
+    }
+
+    /** Sites this user owns or has been added to. */
+    public function accessibleSites(): Builder
+    {
+        return Site::query()->where(fn ($q) => $q->where('user_id', $this->id)
+            ->orWhereHas('members', fn ($m) => $m->whereKey($this->id)));
     }
 }

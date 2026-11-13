@@ -79,6 +79,8 @@ class ScanRunner
                         $fingerprint = Issue::fingerprintFor($site->id, $page->url, $violation['id'], (string) $node['target']);
                         $issue = Issue::firstOrNew(['site_id' => $site->id, 'fingerprint' => $fingerprint]);
                         $isNew = ! $issue->exists || $issue->status === 'fixed';
+                        // A dismissed issue (false positive, won't fix) stays dismissed while it is still there.
+                        $status = $issue->exists && $issue->status === 'dismissed' ? 'dismissed' : 'open';
 
                         $issue->fill([
                             'page_id' => $page->id,
@@ -91,7 +93,7 @@ class ScanRunner
                             'target' => (string) $node['target'],
                             'html' => $node['html'] ?? null,
                             'failure_summary' => $node['failureSummary'] ?? null,
-                            'status' => 'open',
+                            'status' => $status,
                             'last_seen_scan_id' => $scan->id,
                             'fixed_in_scan_id' => null,
                         ]);
@@ -130,10 +132,10 @@ class ScanRunner
      */
     private function finish(Scan $scan, Site $site, array $okPageIds, array $newIssueIds): void
     {
-        // Open issues on pages that scanned cleanly this time, but were not seen again, are fixed.
-        // Pages that failed to load keep their issues open: we simply don't know yet.
+        // Open or dismissed issues on pages that scanned cleanly this time, but were not seen again, are fixed.
+        // Pages that failed to load keep their issues as they are: we simply don't know yet.
         $fixed = $okPageIds === [] ? 0 : Issue::where('site_id', $site->id)
-            ->where('status', 'open')
+            ->whereIn('status', ['open', 'dismissed'])
             ->whereIn('page_id', $okPageIds)
             ->where(fn ($q) => $q->whereNull('last_seen_scan_id')->orWhere('last_seen_scan_id', '!=', $scan->id))
             ->update(['status' => 'fixed', 'fixed_in_scan_id' => $scan->id, 'updated_at' => now()]);

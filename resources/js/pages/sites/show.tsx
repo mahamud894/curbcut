@@ -1,10 +1,11 @@
+import { ActivityList } from '@/components/curbcut/activity-text';
 import { ImpactBadge, impactDot, impactOrder } from '@/components/curbcut/impact-badge';
 import { ScoreRing, scoreTone } from '@/components/curbcut/score-ring';
 import { Stat } from '@/components/curbcut/stat';
 import SiteLayout from '@/layouts/site-layout';
 import { formatDate, plural } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { RuleGroup, ScanSummary, SiteSummary } from '@/types/curbcut';
+import type { ActivityRow, RuleGroup, ScanSummary, SiteSummary } from '@/types/curbcut';
 import { Link } from '@inertiajs/react';
 import { ArrowDownRight, ArrowUpRight, CheckCircle2, FileWarning } from 'lucide-react';
 
@@ -13,9 +14,11 @@ interface Props {
     history: { id: number; date: string | null; score: number | null; issues_open: number }[];
     topRules: RuleGroup[];
     recentScans: ScanSummary[];
+    activity: ActivityRow[];
+    myOpenIssues: number;
 }
 
-export default function SiteShow({ site, history, topRules, recentScans }: Props) {
+export default function SiteShow({ site, history, topRules, recentScans, activity, myOpenIssues }: Props) {
     const scan = site.latest_completed_scan;
     const failed = site.latest_scan?.status === 'failed' ? site.latest_scan : null;
 
@@ -32,6 +35,15 @@ export default function SiteShow({ site, history, topRules, recentScans }: Props
                         <p>{failed.error}</p>
                     </div>
                 </div>
+            )}
+
+            {myOpenIssues > 0 && (
+                <Link
+                    href={`/sites/${site.id}/issues?assignee=me`}
+                    className="w-fit rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900 hover:underline dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100"
+                >
+                    {plural(myOpenIssues, 'open issue')} assigned to you →
+                </Link>
             )}
 
             {!scan ? (
@@ -139,54 +151,62 @@ export default function SiteShow({ site, history, topRules, recentScans }: Props
                 </>
             )}
 
-            <section aria-labelledby="scans-heading" className="bg-card rounded-xl border shadow-xs">
-                <h2 id="scans-heading" className="p-5 pb-3 font-semibold">
-                    Scan history
-                </h2>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="text-muted-foreground border-y text-left text-xs uppercase">
-                            <tr>
-                                <th scope="col" className="px-5 py-2 font-medium">
-                                    Started
-                                </th>
-                                <th scope="col" className="px-5 py-2 font-medium">
-                                    Status
-                                </th>
-                                <th scope="col" className="px-5 py-2 text-right font-medium">
-                                    Pages
-                                </th>
-                                <th scope="col" className="px-5 py-2 text-right font-medium">
-                                    Score
-                                </th>
-                                <th scope="col" className="px-5 py-2 text-right font-medium">
-                                    New
-                                </th>
-                                <th scope="col" className="px-5 py-2 text-right font-medium">
-                                    Fixed
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {recentScans.map((s) => (
-                                <tr key={s.id} className="hover:bg-muted/50">
-                                    <td className="px-5 py-2.5">
-                                        <Link href={`/sites/${site.id}/scans/${s.id}`} className="font-medium underline-offset-4 hover:underline">
-                                            {formatDate(s.started_at ?? s.created_at)}
-                                        </Link>
-                                        {s.trigger === 'scheduled' && <span className="text-muted-foreground ml-2 text-xs">scheduled</span>}
-                                    </td>
-                                    <td className="px-5 py-2.5 capitalize">{s.status}</td>
-                                    <td className="px-5 py-2.5 text-right tabular-nums">{s.pages_scanned}</td>
-                                    <td className="px-5 py-2.5 text-right tabular-nums">{s.score ?? '–'}</td>
-                                    <td className="px-5 py-2.5 text-right tabular-nums">{s.issues_new}</td>
-                                    <td className="px-5 py-2.5 text-right tabular-nums">{s.issues_fixed}</td>
+            <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,380px)]">
+                <section aria-labelledby="scans-heading" className="bg-card rounded-xl border shadow-xs">
+                    <h2 id="scans-heading" className="p-5 pb-3 font-semibold">
+                        Scan history
+                    </h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="text-muted-foreground border-y text-left text-xs uppercase">
+                                <tr>
+                                    <th scope="col" className="px-5 py-2 font-medium">
+                                        Started
+                                    </th>
+                                    <th scope="col" className="px-5 py-2 font-medium">
+                                        Status
+                                    </th>
+                                    <th scope="col" className="px-5 py-2 text-right font-medium">
+                                        Pages
+                                    </th>
+                                    <th scope="col" className="px-5 py-2 text-right font-medium">
+                                        Score
+                                    </th>
+                                    <th scope="col" className="px-5 py-2 text-right font-medium">
+                                        New
+                                    </th>
+                                    <th scope="col" className="px-5 py-2 text-right font-medium">
+                                        Fixed
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                            </thead>
+                            <tbody className="divide-y">
+                                {recentScans.map((s) => (
+                                    <tr key={s.id} className="hover:bg-muted/50">
+                                        <td className="px-5 py-2.5">
+                                            <Link href={`/sites/${site.id}/scans/${s.id}`} className="font-medium underline-offset-4 hover:underline">
+                                                {formatDate(s.started_at ?? s.created_at)}
+                                            </Link>
+                                            {s.trigger === 'scheduled' && <span className="text-muted-foreground ml-2 text-xs">scheduled</span>}
+                                        </td>
+                                        <td className="px-5 py-2.5 capitalize">{s.status}</td>
+                                        <td className="px-5 py-2.5 text-right tabular-nums">{s.pages_scanned}</td>
+                                        <td className="px-5 py-2.5 text-right tabular-nums">{s.score ?? '–'}</td>
+                                        <td className="px-5 py-2.5 text-right tabular-nums">{s.issues_new}</td>
+                                        <td className="px-5 py-2.5 text-right tabular-nums">{s.issues_fixed}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <section aria-labelledby="activity-heading" className="bg-card rounded-xl border p-5 shadow-xs">
+                    <h2 id="activity-heading" className="mb-3 font-semibold">
+                        Recent activity
+                    </h2>
+                    <ActivityList items={activity} empty="Assignments, checklist results and statement changes appear here." />
+                </section>
+            </div>
         </SiteLayout>
     );
 }

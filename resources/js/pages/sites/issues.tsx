@@ -1,19 +1,23 @@
 import { ImpactBadge, impactOrder } from '@/components/curbcut/impact-badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SiteLayout from '@/layouts/site-layout';
 import { plural, shortUrl } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { IssueRow, Paginated, RuleGroup, SiteSummary } from '@/types/curbcut';
+import type { IssueRow, Paginated, RuleGroup, SiteSummary, TeamMember } from '@/types/curbcut';
+import type { RequestPayload } from '@inertiajs/core';
 import { Link, router } from '@inertiajs/react';
-import { BookOpen, CheckCircle2, ChevronDown, ExternalLink } from 'lucide-react';
+import { CalendarClock, CheckCircle2, UserRound } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 interface Filters {
-    status: 'open' | 'fixed';
+    status: 'open' | 'fixed' | 'dismissed';
     impact?: string;
     rule?: string;
     page?: number;
     search?: string;
+    assignee?: string;
+    criterion?: string;
 }
 
 interface Props {
@@ -22,15 +26,21 @@ interface Props {
     issues: Paginated<IssueRow>;
     filters: Filters;
     pages: { id: number; url: string; title: string | null }[];
+    team: TeamMember[];
+    dismissReasons: Record<string, string>;
 }
 
-export default function SiteIssues({ site, rules, issues, filters, pages }: Props) {
+const selectClass = 'border-input bg-background h-9 rounded-md border px-3 text-sm';
+
+export default function SiteIssues({ site, rules, issues, filters, pages, team }: Props) {
     const base = `/sites/${site.id}/issues`;
     const [search, setSearch] = useState(filters.search ?? '');
+    const [selected, setSelected] = useState<number[]>([]);
 
     const apply = (changes: Partial<Filters>) => {
         const next = { ...filters, ...changes };
         const query = Object.fromEntries(Object.entries(next).filter(([, v]) => v !== undefined && v !== '' && v !== null));
+        setSelected([]);
         router.get(base, query, { preserveScroll: true, preserveState: true });
     };
 
@@ -39,11 +49,19 @@ export default function SiteIssues({ site, rules, issues, filters, pages }: Prop
         apply({ search: search || undefined, rule: undefined });
     };
 
+    const bulk = (data: Record<string, unknown>) =>
+        router.patch(base, { ids: selected, ...data } as RequestPayload, { preserveScroll: true, onSuccess: () => setSelected([]) });
+
+    const pageIds = issues.data.map((i) => i.id);
+    const allSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+    const canTriage = filters.status !== 'fixed';
+    const activeRule = rules.find((r) => r.rule_id === filters.rule);
+
     return (
         <SiteLayout site={site} title="Issues">
             <div className="flex flex-wrap items-end gap-3">
                 <div role="group" aria-label="Issue status" className="bg-muted inline-flex rounded-lg p-1">
-                    {(['open', 'fixed'] as const).map((s) => (
+                    {(['open', 'fixed', 'dismissed'] as const).map((s) => (
                         <button
                             key={s}
                             type="button"
@@ -51,12 +69,33 @@ export default function SiteIssues({ site, rules, issues, filters, pages }: Prop
                             onClick={() => apply({ status: s, rule: undefined })}
                             className={cn(
                                 'rounded-md px-3 py-1.5 text-sm font-medium capitalize',
-                                filters.status === s ? 'bg-background shadow-xs' : 'text-muted-foreground hover:text-foreground',
+                                filters.status === s ? 'bg-background shadow-xs' : 'text-foreground/80 hover:text-foreground',
                             )}
                         >
                             {s}
                         </button>
                     ))}
+                </div>
+                <div className="grid gap-1">
+                    <label htmlFor="assignee-filter" className="text-muted-foreground text-xs font-medium">
+                        Assignee
+                    </label>
+                    <select
+                        id="assignee-filter"
+                        value={filters.assignee ?? ''}
+                        onChange={(e) => apply({ assignee: e.target.value || undefined })}
+                        className={selectClass}
+                    >
+                        <option value="">Anyone</option>
+                        <option value="me">Assigned to me</option>
+                        <option value="none">Unassigned</option>
+                        <option value="overdue">Overdue</option>
+                        {team.map((m) => (
+                            <option key={m.id} value={m.id}>
+                                {m.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
                 <div className="grid gap-1">
                     <label htmlFor="impact-filter" className="text-muted-foreground text-xs font-medium">
@@ -66,7 +105,7 @@ export default function SiteIssues({ site, rules, issues, filters, pages }: Prop
                         id="impact-filter"
                         value={filters.impact ?? ''}
                         onChange={(e) => apply({ impact: e.target.value || undefined, rule: undefined })}
-                        className="border-input bg-background h-9 rounded-md border px-3 text-sm capitalize"
+                        className={cn(selectClass, 'capitalize')}
                     >
                         <option value="">All impacts</option>
                         {impactOrder.map((i) => (
@@ -84,7 +123,7 @@ export default function SiteIssues({ site, rules, issues, filters, pages }: Prop
                         id="page-filter"
                         value={filters.page ?? ''}
                         onChange={(e) => apply({ page: e.target.value ? Number(e.target.value) : undefined, rule: undefined })}
-                        className="border-input bg-background h-9 max-w-64 rounded-md border px-3 text-sm"
+                        className={cn(selectClass, 'max-w-64')}
                     >
                         <option value="">All pages</option>
                         {pages.map((p) => (
@@ -151,27 +190,109 @@ export default function SiteIssues({ site, rules, issues, filters, pages }: Prop
                     </ul>
                 </section>
 
-                <section aria-labelledby="list-heading">
+                <section aria-labelledby="list-heading" className="grid content-start gap-3">
                     <h2 id="list-heading" className="sr-only">
                         Issue list
                     </h2>
+
+                    {filters.criterion && (
+                        <p className="bg-muted flex flex-wrap items-center gap-3 rounded-xl px-4 py-2 text-sm">
+                            Showing issues for WCAG {filters.criterion}
+                            <button
+                                type="button"
+                                onClick={() => apply({ criterion: undefined })}
+                                className="font-medium underline underline-offset-4"
+                            >
+                                Show all
+                            </button>
+                        </p>
+                    )}
+
+                    {activeRule && filters.status === 'open' && <RuleAssign siteId={site.id} rule={activeRule} team={team} />}
+
                     {issues.data.length === 0 ? (
                         <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-xl border border-dashed p-10 text-center text-sm">
                             <CheckCircle2 className="size-6 text-emerald-600" aria-hidden="true" />
-                            {filters.status === 'open' ? 'No open issues match these filters.' : 'No fixed issues yet.'}
+                            {filters.status === 'open' ? 'No open issues match these filters.' : `No ${filters.status} issues match these filters.`}
                         </div>
                     ) : (
                         <>
-                            <p className="text-muted-foreground mb-3 text-sm" aria-live="polite">
-                                Showing {issues.from}–{issues.to} of {issues.total.toLocaleString()} {filters.status} issues
-                            </p>
-                            <ul className="grid gap-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                {canTriage ? (
+                                    <label className="flex items-center gap-2 text-sm">
+                                        <input
+                                            type="checkbox"
+                                            className="size-4"
+                                            checked={allSelected}
+                                            onChange={() =>
+                                                setSelected(
+                                                    allSelected
+                                                        ? selected.filter((id) => !pageIds.includes(id))
+                                                        : [...new Set([...selected, ...pageIds])],
+                                                )
+                                            }
+                                        />
+                                        Select all on this page
+                                    </label>
+                                ) : (
+                                    <span />
+                                )}
+                                <p className="text-muted-foreground text-sm" aria-live="polite">
+                                    {issues.from}–{issues.to} of {issues.total.toLocaleString()} {filters.status} issues
+                                </p>
+                            </div>
+
+                            {selected.length > 0 && (
+                                <BulkBar count={selected.length} team={team} status={filters.status} onApply={bulk} onClear={() => setSelected([])} />
+                            )}
+
+                            <ul className="grid gap-2">
                                 {issues.data.map((issue) => (
-                                    <IssueCard key={issue.id} issue={issue} />
+                                    <li key={issue.id} className="bg-card flex items-start gap-3 rounded-xl border p-4 shadow-xs">
+                                        {canTriage && (
+                                            <input
+                                                type="checkbox"
+                                                className="mt-1 size-4 shrink-0"
+                                                aria-label={`Select: ${issue.help} on ${shortUrl(issue.page.url)}`}
+                                                checked={selected.includes(issue.id)}
+                                                onChange={(e) =>
+                                                    setSelected(e.target.checked ? [...selected, issue.id] : selected.filter((id) => id !== issue.id))
+                                                }
+                                            />
+                                        )}
+                                        <ImpactBadge impact={issue.impact} className="mt-0.5 shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                            <Link href={`${base}/${issue.id}`} className="font-medium underline-offset-4 hover:underline">
+                                                {issue.help}
+                                            </Link>
+                                            <p className="text-muted-foreground mt-0.5 truncate font-mono text-xs">{issue.target}</p>
+                                            <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                                                <span className="truncate">on {shortUrl(issue.page.url)}</span>
+                                                {issue.wcag.length > 0 && <span>WCAG {issue.wcag.join(', ')}</span>}
+                                                <span className="inline-flex items-center gap-1">
+                                                    <UserRound className="size-3.5" aria-hidden="true" />
+                                                    {issue.assignee?.name ?? 'Unassigned'}
+                                                </span>
+                                                {issue.due_on && (
+                                                    <span
+                                                        className={cn(
+                                                            'inline-flex items-center gap-1',
+                                                            issue.overdue && 'font-semibold text-red-700 dark:text-red-400',
+                                                        )}
+                                                    >
+                                                        <CalendarClock className="size-3.5" aria-hidden="true" />
+                                                        {issue.overdue ? 'Overdue ' : 'Due '}
+                                                        {issue.due_on}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </li>
                                 ))}
                             </ul>
+
                             {issues.last_page > 1 && (
-                                <nav aria-label="Pagination" className="mt-4 flex flex-wrap gap-1">
+                                <nav aria-label="Pagination" className="mt-2 flex flex-wrap gap-1">
                                     {issues.links.map((link, i) =>
                                         link.url ? (
                                             <Link
@@ -203,71 +324,97 @@ export default function SiteIssues({ site, rules, issues, filters, pages }: Prop
     );
 }
 
-function IssueCard({ issue }: { issue: IssueRow }) {
-    const [open, setOpen] = useState(false);
-    const detailsId = `issue-${issue.id}-details`;
+function BulkBar({
+    count,
+    team,
+    status,
+    onApply,
+    onClear,
+}: {
+    count: number;
+    team: TeamMember[];
+    status: Filters['status'];
+    onApply: (data: Record<string, unknown>) => void;
+    onClear: () => void;
+}) {
+    const [assignee, setAssignee] = useState('');
+    const [due, setDue] = useState('');
 
     return (
-        <li className="bg-card rounded-xl border shadow-xs">
-            <button
-                type="button"
-                onClick={() => setOpen(!open)}
-                aria-expanded={open}
-                aria-controls={detailsId}
-                className="flex w-full items-start gap-3 p-4 text-left"
+        <div role="region" aria-label="Bulk actions" className="bg-muted flex flex-wrap items-end gap-3 rounded-xl p-3 text-sm">
+            <p className="self-center font-medium">{plural(count, 'issue')} selected</p>
+            <div className="grid gap-1">
+                <label htmlFor="bulk-assignee" className="text-xs font-medium">
+                    Assign to
+                </label>
+                <select id="bulk-assignee" value={assignee} onChange={(e) => setAssignee(e.target.value)} className={selectClass}>
+                    <option value="">Choose…</option>
+                    <option value="none">Nobody (unassign)</option>
+                    {team.map((m) => (
+                        <option key={m.id} value={m.id}>
+                            {m.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <div className="grid gap-1">
+                <label htmlFor="bulk-due" className="text-xs font-medium">
+                    Due date
+                </label>
+                <Input id="bulk-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} className="h-9 w-40" />
+            </div>
+            <Button
+                size="sm"
+                disabled={!assignee && !due}
+                onClick={() =>
+                    onApply({
+                        ...(assignee ? { assignee_id: assignee === 'none' ? null : Number(assignee) } : {}),
+                        ...(due ? { due_on: due } : {}),
+                    })
+                }
             >
-                <ImpactBadge impact={issue.impact} className="mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1">
-                    <span className="block font-medium">{issue.help}</span>
-                    <span className="text-muted-foreground mt-0.5 block truncate font-mono text-xs">{issue.target}</span>
-                    <span className="text-muted-foreground mt-1 block truncate text-xs">on {shortUrl(issue.page.url)}</span>
-                </span>
-                <ChevronDown
-                    className={cn('text-muted-foreground mt-1 size-4 shrink-0 transition-transform', open && 'rotate-180')}
-                    aria-hidden="true"
-                />
-            </button>
-            {open && (
-                <div id={detailsId} className="grid gap-3 border-t p-4 text-sm">
-                    {issue.description && <p>{issue.description}</p>}
-                    {issue.html && (
-                        <div>
-                            <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">Element</p>
-                            <pre className="bg-muted overflow-x-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">{issue.html}</pre>
-                        </div>
-                    )}
-                    {issue.failure_summary && (
-                        <div>
-                            <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">How to fix</p>
-                            <p className="whitespace-pre-line">{issue.failure_summary}</p>
-                        </div>
-                    )}
-                    <div className="flex flex-wrap items-center gap-3 text-xs">
-                        {issue.wcag.length > 0 && <span className="bg-muted rounded px-2 py-1 font-medium">WCAG {issue.wcag.join(', ')}</span>}
-                        <span className="text-muted-foreground font-mono">{issue.rule_id}</span>
-                        {issue.help_url && (
-                            <a
-                                href={issue.help_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
-                            >
-                                <BookOpen className="size-3.5" aria-hidden="true" /> Learn how to fix
-                                <span className="sr-only">(opens in a new tab)</span>
-                            </a>
-                        )}
-                        <a
-                            href={issue.page.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
-                        >
-                            <ExternalLink className="size-3.5" aria-hidden="true" /> Open page
-                            <span className="sr-only">(opens in a new tab)</span>
-                        </a>
-                    </div>
-                </div>
+                Apply
+            </Button>
+            {status === 'dismissed' && (
+                <Button size="sm" variant="outline" onClick={() => onApply({ restore: true })}>
+                    Reopen
+                </Button>
             )}
-        </li>
+            <Button size="sm" variant="ghost" onClick={onClear}>
+                Clear selection
+            </Button>
+        </div>
+    );
+}
+
+function RuleAssign({ siteId, rule, team }: { siteId: number; rule: RuleGroup; team: TeamMember[] }) {
+    const [assignee, setAssignee] = useState('');
+    return (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed p-3 text-sm">
+            <span>
+                Assign all <strong>{plural(rule.total, 'issue')}</strong> of this problem to
+            </span>
+            <label htmlFor="rule-assignee" className="sr-only">
+                Assignee for all issues of this problem
+            </label>
+            <select id="rule-assignee" value={assignee} onChange={(e) => setAssignee(e.target.value)} className={selectClass}>
+                <option value="">Choose…</option>
+                {team.map((m) => (
+                    <option key={m.id} value={m.id}>
+                        {m.name}
+                    </option>
+                ))}
+            </select>
+            <Button
+                size="sm"
+                variant="outline"
+                disabled={!assignee}
+                onClick={() =>
+                    router.patch(`/sites/${siteId}/issues`, { rule_id: rule.rule_id, assignee_id: Number(assignee) }, { preserveScroll: true })
+                }
+            >
+                Assign all
+            </Button>
+        </div>
     );
 }

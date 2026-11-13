@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\StartScan;
+use App\Compliance\Wcag;
 use App\Http\Requests\SiteRequest;
 use App\Models\Issue;
 use App\Models\Scan;
@@ -18,12 +19,12 @@ class SiteController extends Controller
 {
     public function index(Request $request): Response
     {
-        $sites = $request->user()->sites()
+        $sites = $request->user()->accessibleSites()
             ->with(['latestScan', 'latestCompletedScan'])
             ->withCount(['issues as open_issues_count' => fn ($q) => $q->where('status', 'open')])
             ->orderBy('name')
             ->get()
-            ->map(fn (Site $site) => $this->siteSummary($site));
+            ->map(fn (Site $site) => self::summary($site) + ['shared' => $site->user_id !== $request->user()->id]);
 
         return Inertia::render('sites/index', [
             'sites' => $sites,
@@ -70,10 +71,13 @@ class SiteController extends Controller
             ->orderByDesc('total')->limit(6)->get();
 
         return Inertia::render('sites/show', [
-            'site' => $this->siteSummary($site->loadCount(['issues as open_issues_count' => fn ($q) => $q->where('status', 'open')])),
+            'site' => self::summary($site->loadCount(['issues as open_issues_count' => fn ($q) => $q->where('status', 'open')])),
             'history' => $history,
             'topRules' => $topRules,
-            'recentScans' => $site->scans()->latest('id')->limit(8)->get()->map(fn (Scan $s) => $this->scanSummary($s)),
+            'recentScans' => $site->scans()->latest('id')->limit(8)->get()->map(fn (Scan $s) => self::scanSummary($s)),
+            'activity' => $site->activities()->with('user:id,name')->latest('id')->limit(10)->get()
+                ->map(fn ($a) => ['id' => $a->id, 'action' => $a->action, 'properties' => $a->properties, 'user' => $a->user?->name, 'subject_id' => $a->subject_id, 'created_at' => $a->created_at?->toIso8601String()]),
+            'myOpenIssues' => $site->issues()->where('status', 'open')->where('assignee_id', request()->user()->id)->count(),
         ]);
     }
 
@@ -81,7 +85,9 @@ class SiteController extends Controller
     {
         $this->authorize('view', $site);
         $filters = $request->validate([
-            'status' => ['nullable', 'in:open,fixed'],
+            'status' => ['nullable', 'in:open,fixed,dismissed'],
+            'assignee' => ['nullable', 'string', 'max:20'],
+            'criterion' => ['nullable', 'regex:/^\d\.\d\.\d{1,2}$/'],
             'impact' => ['nullable', 'in:'.implode(',', Issue::IMPACTS)],
             'rule' => ['nullable', 'string', 'max:100'],
             'page' => ['nullable', 'integer'],
@@ -92,6 +98,13 @@ class SiteController extends Controller
         $base = $site->issues()->where('status', $status)
             ->when($filters['impact'] ?? null, fn ($q, $v) => $q->where('impact', $v))
             ->when($filters['page'] ?? null, fn ($q, $v) => $q->where('page_id', $v))
+            ->when($filters['criterion'] ?? null, fn ($q, $v) => $q->whereJsonContains('wcag', 'wcag'.str_replace('.', '', $v)))
+            ->when($filters['assignee'] ?? null, fn ($q, $v) => match ($v) {
+                'me' => $q->where('assignee_id', $request->user()->id),
+                'none' => $q->whereNull('assignee_id'),
+                'overdue' => $q->whereNotNull('due_on')->whereDate('due_on', '<', today()),
+                default => $q->where('assignee_id', (int) $v),
+            })
             ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($w) => $w->where('help', 'like', "%{$v}%")->orWhere('target', 'like', "%{$v}%")->orWhere('rule_id', 'like', "%{$v}%")));
 
         $rules = (clone $base)
@@ -102,30 +115,21 @@ class SiteController extends Controller
 
         $issues = (clone $base)
             ->when($filters['rule'] ?? null, fn ($q, $v) => $q->where('rule_id', $v))
-            ->with('page:id,url,title')
+            ->with(['page:id,url,title', 'assignee:id,name'])
             ->orderByRaw("case impact when 'critical' then 0 when 'serious' then 1 when 'moderate' then 2 else 3 end")
             ->latest('id')
             ->paginate(25)->withQueryString()
-            ->through(fn (Issue $i) => [
-                'id' => $i->id,
-                'rule_id' => $i->rule_id,
-                'impact' => $i->impact,
-                'help' => $i->help,
-                'description' => $i->description,
-                'help_url' => $i->help_url,
-                'wcag' => $this->wcagCriteria($i->wcag),
-                'target' => $i->target,
-                'html' => $i->html,
-                'failure_summary' => $i->failure_summary,
-                'status' => $i->status,
-                'page' => ['id' => $i->page->id, 'url' => $i->page->url, 'title' => $i->page->title],
-                'first_seen_scan_id' => $i->first_seen_scan_id,
-                'fixed_in_scan_id' => $i->fixed_in_scan_id,
+            ->through(fn (Issue $i) => self::issueRow($i) + [
+                'assignee' => $i->assignee?->only(['id', 'name']),
+                'due_on' => $i->due_on?->toDateString(),
+                'overdue' => $i->isOverdue(),
             ]);
 
         return Inertia::render('sites/issues', [
-            'site' => $this->siteSummary($site->load(['latestScan', 'latestCompletedScan'])),
+            'site' => self::summary($site->load(['latestScan', 'latestCompletedScan'])),
             'rules' => $rules,
+            'team' => $site->team()->map->only(['id', 'name']),
+            'dismissReasons' => Issue::DISMISS_REASONS,
             'issues' => $issues,
             'filters' => ['status' => $status] + $filters,
             'pages' => $site->pages()->orderBy('url')->get(['id', 'url', 'title']),
@@ -153,7 +157,7 @@ class SiteController extends Controller
                 'last_result' => $page->results->first()?->only(['status', 'http_status', 'error', 'duration_ms']),
             ]);
 
-        return Inertia::render('sites/pages', ['site' => $this->siteSummary($site), 'pages' => $pages]);
+        return Inertia::render('sites/pages', ['site' => self::summary($site), 'pages' => $pages]);
     }
 
     public function scan(Site $site, Scan $scan): Response
@@ -165,8 +169,8 @@ class SiteController extends Controller
         $issueRow = fn (Issue $i) => ['id' => $i->id, 'rule_id' => $i->rule_id, 'impact' => $i->impact, 'help' => $i->help, 'target' => $i->target, 'page_url' => $i->page->url];
 
         return Inertia::render('sites/scan', [
-            'site' => $this->siteSummary($site),
-            'scan' => $this->scanSummary($scan),
+            'site' => self::summary($site),
+            'scan' => self::scanSummary($scan),
             'newIssues' => $site->issues()->where('first_seen_scan_id', $scan->id)->where('status', 'open')->with('page:id,url')->limit(200)->get()->map($issueRow),
             'fixedIssues' => $site->issues()->where('fixed_in_scan_id', $scan->id)->with('page:id,url')->limit(200)->get()->map($issueRow),
             'failedPages' => $scan->results()->where('status', 'failed')->with('page:id,url')->get()->map(fn ($r) => ['url' => $r->page->url, 'error' => $r->error, 'http_status' => $r->http_status]),
@@ -177,7 +181,12 @@ class SiteController extends Controller
     {
         $this->authorize('update', $site);
 
-        return Inertia::render('sites/settings', ['site' => $this->siteSummary($site->load(['latestScan', 'latestCompletedScan']))]);
+        return Inertia::render('sites/settings', [
+            'site' => self::summary($site->load(['latestScan', 'latestCompletedScan', 'user', 'members'])),
+            'owner' => $site->user->only(['id', 'name', 'email']),
+            'members' => $site->members->map->only(['id', 'name', 'email']),
+            'canManageMembers' => request()->user()->can('manageMembers', $site),
+        ]);
     }
 
     public function update(SiteRequest $request, Site $site): RedirectResponse
@@ -206,7 +215,7 @@ class SiteController extends Controller
             : back()->with('error', 'A scan is already running for this site.');
     }
 
-    private function siteSummary(Site $site): array
+    public static function summary(Site $site): array
     {
         return [
             'id' => $site->id,
@@ -217,12 +226,12 @@ class SiteController extends Controller
             'scan_frequency' => $site->scan_frequency,
             'last_scanned_at' => $site->last_scanned_at?->toIso8601String(),
             'open_issues_count' => $site->open_issues_count ?? $site->issues()->where('status', 'open')->count(),
-            'latest_scan' => $site->latestScan ? $this->scanSummary($site->latestScan) : null,
-            'latest_completed_scan' => $site->latestCompletedScan ? $this->scanSummary($site->latestCompletedScan) : null,
+            'latest_scan' => $site->latestScan ? self::scanSummary($site->latestScan) : null,
+            'latest_completed_scan' => $site->latestCompletedScan ? self::scanSummary($site->latestCompletedScan) : null,
         ];
     }
 
-    private function scanSummary(Scan $scan): array
+    public static function scanSummary(Scan $scan): array
     {
         return $scan->only([
             'id', 'status', 'trigger', 'pages_total', 'pages_scanned', 'pages_failed', 'issues_open', 'issues_new',
@@ -234,16 +243,30 @@ class SiteController extends Controller
         ];
     }
 
-    /** Turn axe tags like "wcag143" into readable success criteria like "1.4.3". @return list<string> */
-    private function wcagCriteria(array $tags): array
+    /** @return array<string, mixed> */
+    public static function issueRow(Issue $i): array
     {
-        $criteria = [];
-        foreach ($tags as $tag) {
-            if (preg_match('/^wcag(\d)(\d)(\d+)$/', $tag, $m)) {
-                $criteria[] = "{$m[1]}.{$m[2]}.{$m[3]}";
-            }
-        }
+        return [
+            'id' => $i->id,
+            'rule_id' => $i->rule_id,
+            'impact' => $i->impact,
+            'help' => $i->help,
+            'description' => $i->description,
+            'help_url' => $i->help_url,
+            'wcag' => self::wcagCriteria($i->wcag),
+            'target' => $i->target,
+            'html' => $i->html,
+            'failure_summary' => $i->failure_summary,
+            'status' => $i->status,
+            'page' => ['id' => $i->page->id, 'url' => $i->page->url, 'title' => $i->page->title],
+            'first_seen_scan_id' => $i->first_seen_scan_id,
+            'fixed_in_scan_id' => $i->fixed_in_scan_id,
+        ];
+    }
 
-        return array_values(array_unique($criteria));
+    /** Turn axe tags like "wcag143" into readable success criteria like "1.4.3". @return list<string> */
+    private static function wcagCriteria(array $tags): array
+    {
+        return array_values(array_unique(array_filter(array_map(fn ($t) => Wcag::fromAxeTag($t), $tags))));
     }
 }

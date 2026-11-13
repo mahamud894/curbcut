@@ -34,6 +34,7 @@ export interface SiteSummary {
     open_issues_count: number;
     latest_scan: ScanSummary | null;
     latest_completed_scan: ScanSummary | null;
+    shared?: boolean;
 }
 
 export interface RuleGroup {
@@ -55,10 +56,52 @@ export interface IssueRow {
     target: string;
     html: string | null;
     failure_summary: string | null;
-    status: 'open' | 'fixed';
+    status: 'open' | 'fixed' | 'dismissed';
     page: { id: number; url: string; title: string | null };
     first_seen_scan_id: number | null;
     fixed_in_scan_id: number | null;
+    assignee?: { id: number; name: string } | null;
+    due_on?: string | null;
+    overdue?: boolean;
+}
+
+export interface TeamMember {
+    id: number;
+    name: string;
+}
+
+export interface ActivityRow {
+    id: number;
+    action: string;
+    properties: Record<string, string | null> | null;
+    user: string | null;
+    subject_id?: number | null;
+    created_at: string | null;
+}
+
+export type ChecklistStatus = 'not_tested' | 'pass' | 'fail' | 'not_applicable';
+
+export interface Criterion {
+    id: string;
+    title: string;
+    level: 'A' | 'AA';
+    principle: string;
+    url: string;
+    status: ChecklistStatus;
+    notes: string | null;
+    tested_by: string | null;
+    tested_at: string | null;
+    automated_issues: number;
+}
+
+export interface Assessment {
+    criteria: Criterion[];
+    counts: { pass: number; fail: number; not_applicable: number; not_tested: number; total: number };
+    suggested: 'full' | 'partial' | 'none';
+    complete: boolean;
+    failing: { id: string; title: string; notes: string | null; automated: number }[];
+    automated_rules: { help: string; total: number; criteria: string[] }[];
+    last_tested_at: string | null;
 }
 
 export interface Paginated<T> {
