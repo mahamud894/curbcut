@@ -24,6 +24,7 @@ class StatementController extends Controller
             'statement' => $this->statementData($statement),
             'preview' => $this->publicData($site, $statement, $conformance),
             'conformanceLabels' => Conformance::LABELS,
+            'language' => $site->language,
         ]);
     }
 
@@ -38,12 +39,17 @@ class StatementController extends Controller
             'additional_limitations' => ['nullable', 'string', 'max:10000'],
             'feedback_process' => ['nullable', 'string', 'max:5000'],
             'enforcement_procedure' => ['nullable', 'string', 'max:5000'],
+            'language' => ['nullable', Rule::in(array_keys(config('locales')))],
         ]);
 
+        if (! empty($data['language'])) {
+            $site->update(['language' => $data['language']]);
+        }
+        unset($data['language']);
         $this->statementFor($site)->update($data);
         Activity::record($site, $request->user(), 'statement.updated', $site->statement);
 
-        return back()->with('success', 'Statement saved.');
+        return back()->with('success', tr('Statement saved.'));
     }
 
     public function publish(Request $request, Site $site): RedirectResponse
@@ -53,19 +59,21 @@ class StatementController extends Controller
         $request->validate(['published' => ['required', 'boolean']]);
 
         if ($request->boolean('published') && (! $statement->organisation || ! $statement->contact_email)) {
-            return back()->with('error', 'Add the organisation name and a contact email before publishing.');
+            return back()->with('error', tr('Add the organisation name and a contact email before publishing.'));
         }
 
         $statement->update(['published_at' => $request->boolean('published') ? ($statement->published_at ?? now()) : null]);
         Activity::record($site, $request->user(), $statement->isPublished() ? 'statement.published' : 'statement.unpublished', $statement);
 
-        return back()->with('success', $statement->isPublished() ? 'Statement published.' : 'Statement unpublished.');
+        return back()->with('success', $statement->isPublished() ? tr('Statement published.') : tr('Statement unpublished.'));
     }
 
     /** The public, unauthenticated statement page. */
     public function public(string $token, Conformance $conformance): Response
     {
         $statement = Statement::where('public_token', $token)->whereNotNull('published_at')->firstOrFail();
+        // The public page is shown in the statement's language, whatever the visitor's browser says.
+        app()->setLocale($statement->site->language);
 
         return Inertia::render('statement/public', [
             'statement' => $this->publicData($statement->site, $statement, $conformance),
@@ -75,7 +83,7 @@ class StatementController extends Controller
     private function statementFor(Site $site): Statement
     {
         return $site->statement ?? $site->statement()->create([
-            'feedback_process' => 'We welcome your feedback on the accessibility of this website. If you find a barrier, please contact us and we will try to respond within 5 business days.',
+            'feedback_process' => tr('We welcome your feedback on the accessibility of this website. If you find a barrier, please contact us and we will try to respond within 5 business days.', [], $site->language),
         ]);
     }
 

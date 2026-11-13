@@ -1,8 +1,10 @@
 import { ImpactBadge } from '@/components/curbcut/impact-badge';
 import { Stat } from '@/components/curbcut/stat';
 import SiteLayout from '@/layouts/site-layout';
-import { formatDate, shortUrl } from '@/lib/format';
+import { capitalize, formatDate, shortUrl } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Impact, ScanSummary, SiteSummary } from '@/types/curbcut';
+import { useId } from 'react';
 
 interface Row {
     id: number;
@@ -26,36 +28,40 @@ export default function ScanDetail({ site, scan, newIssues, fixedIssues, failedP
         scan.started_at && scan.finished_at ? Math.round((new Date(scan.finished_at).getTime() - new Date(scan.started_at).getTime()) / 1000) : null;
 
     return (
-        <SiteLayout site={site} title={`Scan #${scan.id}`}>
+        <SiteLayout site={site} title={t('Scan #{id}', { id: scan.id })}>
             <div>
-                <h2 className="text-lg font-semibold">Scan #{scan.id}</h2>
+                <h2 className="text-lg font-semibold">{t('Scan #{id}', { id: scan.id })}</h2>
                 <p className="text-muted-foreground text-sm">
                     {formatDate(scan.started_at ?? scan.created_at)} ·{' '}
-                    {scan.trigger === 'scheduled' ? 'Scheduled' : scan.trigger === 'api' ? 'Started from the API' : 'Started manually'} ·{' '}
-                    <span className="capitalize">{scan.status}</span>
-                    {duration !== null && ` · took ${duration}s`}
+                    {scan.trigger === 'scheduled' ? t('Scheduled') : scan.trigger === 'api' ? t('Started from the API') : t('Started manually')} ·{' '}
+                    <span>{t(capitalize(scan.status))}</span>
+                    {duration !== null && ` · ${t('took {seconds} s', { seconds: duration })}`}
                 </p>
                 {scan.error && <p className="mt-2 text-sm text-red-700 dark:text-red-400">{scan.error}</p>}
             </div>
 
-            <section aria-label="Scan totals" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Stat label="Score" value={scan.score ?? '–'} />
-                <Stat label="Pages scanned" value={scan.pages_scanned} hint={scan.pages_failed ? `${scan.pages_failed} failed` : undefined} />
-                <Stat label="New issues" value={scan.issues_new} tone={scan.issues_new ? 'text-red-700 dark:text-red-400' : undefined} />
+            <section aria-label={t('Scan totals')} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Stat label={t('Score')} value={scan.score ?? '–'} />
                 <Stat
-                    label="Fixed issues"
+                    label={t('Pages scanned')}
+                    value={scan.pages_scanned}
+                    hint={scan.pages_failed ? t('{count} failed', { count: scan.pages_failed }) : undefined}
+                />
+                <Stat label={t('New issues')} value={scan.issues_new} tone={scan.issues_new ? 'text-red-700 dark:text-red-400' : undefined} />
+                <Stat
+                    label={t('Fixed issues')}
                     value={scan.issues_fixed}
                     tone={scan.issues_fixed ? 'text-emerald-700 dark:text-emerald-400' : undefined}
                 />
             </section>
 
-            <IssueTable title="New in this scan" rows={newIssues} empty="Nothing new appeared in this scan." />
-            <IssueTable title="Fixed in this scan" rows={fixedIssues} empty="Nothing was fixed in this scan." />
+            <IssueTable title={t('New in this scan')} rows={newIssues} empty={t('Nothing new appeared in this scan.')} />
+            <IssueTable title={t('Fixed in this scan')} rows={fixedIssues} empty={t('Nothing was fixed in this scan.')} />
 
             {failedPages.length > 0 && (
                 <section aria-labelledby="failed-heading" className="bg-card rounded-xl border shadow-xs">
                     <h2 id="failed-heading" className="p-5 pb-3 font-semibold">
-                        Pages that could not be scanned
+                        {t('Pages that could not be scanned')}
                     </h2>
                     <ul className="divide-y border-t text-sm">
                         {failedPages.map((p) => (
@@ -72,7 +78,7 @@ export default function ScanDetail({ site, scan, newIssues, fixedIssues, failedP
 }
 
 function IssueTable({ title, rows, empty }: { title: string; rows: Row[]; empty: string }) {
-    const id = title.toLowerCase().replace(/\W+/g, '-');
+    const id = useId();
     return (
         <section aria-labelledby={id} className="bg-card rounded-xl border shadow-xs">
             <h2 id={id} className="p-5 pb-3 font-semibold">

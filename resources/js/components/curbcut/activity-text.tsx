@@ -1,44 +1,59 @@
-import { relativeTime } from '@/lib/format';
+import { formatDay, relativeTime } from '@/lib/format';
+import { t, tk } from '@/lib/i18n';
 import type { ActivityRow } from '@/types/curbcut';
 
-const statusWords: Record<string, string> = { pass: 'passing', fail: 'failing', not_applicable: 'not applicable', not_tested: 'not tested' };
+const statusWords: Record<string, string> = {
+    pass: tk('passing'),
+    fail: tk('failing'),
+    not_applicable: tk('not applicable'),
+    not_tested: tk('not tested'),
+};
 
 /** Human-readable sentence for an audit-trail entry. */
 export function activitySentence(a: ActivityRow): string {
-    const who = a.user ?? 'Someone';
+    const who = a.user ?? t('Someone');
     const p = a.properties ?? {};
     switch (a.action) {
         case 'issue.assigned':
-            return p.assignee ? `${who} assigned “${p.issue}” to ${p.assignee}` : `${who} unassigned “${p.issue}”`;
+            return p.assignee
+                ? t('{who} assigned “{issue}” to {assignee}', { who, issue: p.issue, assignee: p.assignee })
+                : t('{who} unassigned “{issue}”', { who, issue: p.issue });
         case 'issue.due_date_changed':
-            return p.due_on ? `${who} set the due date of “${p.issue}” to ${p.due_on}` : `${who} removed the due date of “${p.issue}”`;
+            return p.due_on
+                ? t('{who} set the due date of “{issue}” to {date}', { who, issue: p.issue, date: formatDay(p.due_on) })
+                : t('{who} removed the due date of “{issue}”', { who, issue: p.issue });
         case 'issue.dismissed':
-            return `${who} dismissed “${p.issue}” as ${String(p.reason).toLowerCase()}`;
+            return t('{who} dismissed “{issue}”: {reason}', { who, issue: p.issue, reason: t(String(p.reason)) });
         case 'issue.restored':
-            return `${who} reopened “${p.issue}”`;
+            return t('{who} reopened “{issue}”', { who, issue: p.issue });
         case 'issue.commented':
-            return `${who} commented on “${p.issue}”`;
+            return t('{who} commented on “{issue}”', { who, issue: p.issue });
         case 'checklist.updated':
-            return `${who} marked ${p.criterion} ${p.title} as ${statusWords[p.to ?? ''] ?? p.to}`;
+            return t('{who} marked {criterion} {title} as {status}', {
+                who,
+                criterion: p.criterion,
+                title: t(String(p.title)),
+                status: t(statusWords[p.to ?? ''] ?? String(p.to)),
+            });
         case 'statement.updated':
-            return `${who} edited the accessibility statement`;
+            return t('{who} edited the accessibility statement', { who });
         case 'statement.published':
-            return `${who} published the accessibility statement`;
+            return t('{who} published the accessibility statement', { who });
         case 'statement.unpublished':
-            return `${who} unpublished the accessibility statement`;
+            return t('{who} unpublished the accessibility statement', { who });
         case 'member.added':
-            return `${who} gave ${p.member} access`;
+            return t('{who} gave {member} access', { who, member: p.member });
         case 'report.generated':
-            return `${who} downloaded an audit report`;
+            return t('{who} downloaded an audit report', { who });
         case 'member.removed':
-            return `${who} removed ${p.member}`;
+            return t('{who} removed {member}', { who, member: p.member });
         default:
             return `${who}: ${a.action}`;
     }
 }
 
-export function ActivityList({ items, empty = 'No activity yet.' }: { items: ActivityRow[]; empty?: string }) {
-    if (items.length === 0) return <p className="text-muted-foreground text-sm">{empty}</p>;
+export function ActivityList({ items, empty }: { items: ActivityRow[]; empty?: string }) {
+    if (items.length === 0) return <p className="text-muted-foreground text-sm">{empty ?? t('No activity yet.')}</p>;
     return (
         <ol className="grid gap-3">
             {items.map((a) => (

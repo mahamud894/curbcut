@@ -29,7 +29,7 @@ class MemberController extends Controller
         $site->members()->attach($user);
         Activity::record($site, $request->user(), 'member.added', $user, ['member' => $user->name]);
 
-        return back()->with('success', "{$user->name} was added as a guest and can now work on {$site->name}.");
+        return back()->with('success', tr('{person} was added as a guest and can now work on {site}.', ['person' => $user->name, 'site' => $site->name]));
     }
 
     public function destroy(Request $request, Site $site, User $user): RedirectResponse
@@ -40,6 +40,6 @@ class MemberController extends Controller
         $site->issues()->where('assignee_id', $user->id)->update(['assignee_id' => null]);
         Activity::record($site, $request->user(), 'member.removed', $user, ['member' => $user->name]);
 
-        return back()->with('success', "{$user->name} no longer has access to {$site->name}.");
+        return back()->with('success', tr('{person} no longer has access to {site}.', ['person' => $user->name, 'site' => $site->name]));
     }
 }

@@ -13,7 +13,9 @@ class PdfRenderer
         $path = tempnam(sys_get_temp_dir(), 'curbcut-report-').'.pdf';
         $env = array_filter(['CURBCUT_CHROME_PATH' => config('curbcut.chrome_path')]);
 
-        $process = new Process([config('curbcut.node_binary'), base_path('scanner/pdf.mjs'), $path], base_path(), $env ?: null, $html, 120);
+        // Footer in the current language; {page} and {total} are filled in by Chrome.
+        $pageLabel = __('Page {page} of {total}');
+        $process = new Process([config('curbcut.node_binary'), base_path('scanner/pdf.mjs'), $path, $pageLabel], base_path(), $env ?: null, $html, 120);
         $process->run();
 
         if (! $process->isSuccessful() || ! is_file($path) || filesize($path) === 0) {

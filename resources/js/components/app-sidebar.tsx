@@ -2,6 +2,7 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { t, tk } from '@/lib/i18n';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Github, Globe, LayoutGrid } from 'lucide-react';
@@ -10,12 +11,12 @@ import { WorkspaceSwitcher } from './curbcut/workspace-switcher';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Sites',
+        title: tk('Sites'),
         url: '/sites',
         icon: Globe,
     },
     {
-        title: 'All workspaces',
+        title: tk('All workspaces'),
         url: '/workspaces',
         icon: LayoutGrid,
     },
@@ -23,12 +24,12 @@ const mainNavItems: NavItem[] = [
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Source code',
+        title: tk('Source code'),
         url: 'https://github.com/mahamud894/curbcut',
         icon: Github,
     },
     {
-        title: 'WCAG 2.2 quick reference',
+        title: tk('WCAG 2.2 quick reference'),
         url: 'https://www.w3.org/WAI/WCAG22/quickref/',
         icon: BookOpen,
     },
@@ -36,7 +37,7 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset" role="navigation" aria-label="Main">
+        <Sidebar collapsible="icon" variant="inset" role="navigation" aria-label={t('Main')}>
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>

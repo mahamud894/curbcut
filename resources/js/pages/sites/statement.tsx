@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SiteLayout from '@/layouts/site-layout';
+import { loadLocale, t, tRich, translatorFor, type Translator } from '@/lib/i18n';
+import { type SharedData } from '@/types';
 import type { SiteSummary } from '@/types/curbcut';
-import { router, useForm } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Check, Copy, ExternalLink, Globe, LoaderCircle, TriangleAlert } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 
 interface StatementForm {
     organisation: string | null;
@@ -27,12 +29,15 @@ interface Props {
     statement: StatementForm;
     preview: PublicStatement;
     conformanceLabels: Record<string, string>;
+    language: string;
 }
 
 const textareaClass = 'border-input bg-background rounded-md border px-3 py-2 text-sm';
 
-export default function StatementEditor({ site, statement, preview, conformanceLabels }: Props) {
+export default function StatementEditor({ site, statement, preview, conformanceLabels, language }: Props) {
+    const { locales } = usePage<SharedData>().props;
     const { data, setData, put, processing, errors, isDirty } = useForm({
+        language,
         organisation: statement.organisation ?? '',
         contact_email: statement.contact_email ?? '',
         contact_phone: statement.contact_phone ?? '',
@@ -42,6 +47,16 @@ export default function StatementEditor({ site, statement, preview, conformanceL
         enforcement_procedure: statement.enforcement_procedure ?? '',
     });
     const [copied, setCopied] = useState(false);
+    const [previewTr, setPreviewTr] = useState<Translator | null>(null);
+
+    // The preview is shown in the statement's language, which can differ from the interface language.
+    useEffect(() => {
+        let cancelled = false;
+        loadLocale(language).then(() => !cancelled && setPreviewTr(translatorFor(language)));
+        return () => {
+            cancelled = true;
+        };
+    }, [language]);
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -57,7 +72,7 @@ export default function StatementEditor({ site, statement, preview, conformanceL
     };
 
     return (
-        <SiteLayout site={site} title="Accessibility statement">
+        <SiteLayout site={site} title={t('Accessibility statement')}>
             <section
                 aria-labelledby="publish-heading"
                 className="bg-card flex flex-wrap items-center justify-between gap-4 rounded-xl border p-5 shadow-xs"
@@ -65,19 +80,21 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                 <div>
                     <h2 id="publish-heading" className="flex items-center gap-2 font-semibold">
                         <Globe className="size-4" aria-hidden="true" />
-                        {statement.published ? 'Published' : 'Not published'}
+                        {statement.published ? t('Published') : t('Not published')}
                     </h2>
                     <p className="text-muted-foreground mt-1 text-sm">
                         {statement.published
-                            ? 'The public page updates automatically after every scan and checklist change. Link to it from your website footer.'
-                            : 'Publish to get a public page you can link from your website, as the European Accessibility Act and similar laws require.'}
+                            ? t('The public page updates automatically after every scan and checklist change. Link to it from your website footer.')
+                            : t(
+                                  'Publish to get a public page you can link from your website, as the European Accessibility Act and similar laws require.',
+                              )}
                     </p>
                     {statement.published && (
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                             <code className="bg-muted rounded px-2 py-1 text-xs break-all">{statement.public_url}</code>
                             <Button size="sm" variant="outline" onClick={copy}>
                                 {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-                                {copied ? 'Copied' : 'Copy link'}
+                                {copied ? t('Copied') : t('Copy link')}
                             </Button>
                             <a
                                 href={statement.public_url}
@@ -85,8 +102,8 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline"
                             >
-                                Open <ExternalLink className="size-3.5" aria-hidden="true" />
-                                <span className="sr-only">(opens in a new tab)</span>
+                                {t('Open')} <ExternalLink className="size-3.5" aria-hidden="true" />
+                                <span className="sr-only">{t('(opens in a new tab)')}</span>
                             </a>
                         </div>
                     )}
@@ -95,7 +112,7 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                     variant={statement.published ? 'outline' : 'default'}
                     onClick={() => router.put(`/sites/${site.id}/statement/publish`, { published: !statement.published }, { preserveScroll: true })}
                 >
-                    {statement.published ? 'Unpublish' : 'Publish statement'}
+                    {statement.published ? t('Unpublish') : t('Publish statement')}
                 </Button>
             </section>
 
@@ -106,32 +123,54 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                 >
                     <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                     <p>
-                        {preview.checklist_counts.not_tested} of {preview.checklist_counts.total} WCAG criteria have not been reviewed yet. Complete
-                        the{' '}
-                        <a href={`/sites/${site.id}/checklist`} className="font-medium underline underline-offset-4">
-                            checklist
-                        </a>{' '}
-                        before claiming conformance.
+                        {tRich(
+                            '{count} of {total} WCAG criteria have not been reviewed yet. Complete the <link>checklist</link> before claiming conformance.',
+                            {
+                                count: preview.checklist_counts.not_tested,
+                                total: preview.checklist_counts.total,
+                                link: (chunks: ReactNode) => (
+                                    <a href={`/sites/${site.id}/checklist`} className="font-medium underline underline-offset-4">
+                                        {chunks}
+                                    </a>
+                                ),
+                            },
+                        )}
                     </p>
                 </div>
             )}
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,460px)_1fr]">
                 <form onSubmit={submit} className="bg-card grid content-start gap-5 rounded-xl border p-5 shadow-xs">
-                    <h2 className="font-semibold">Details</h2>
+                    <h2 className="font-semibold">{t('Details')}</h2>
                     <div className="grid gap-2">
-                        <Label htmlFor="organisation">Organisation name</Label>
+                        <Label htmlFor="language">{t('Language of the statement and audit reports')}</Label>
+                        <select
+                            id="language"
+                            value={data.language}
+                            onChange={(e) => setData('language', e.target.value)}
+                            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                        >
+                            {Object.entries(locales).map(([code, name]) => (
+                                <option key={code} value={code} lang={code}>
+                                    {name}
+                                </option>
+                            ))}
+                        </select>
+                        <InputError message={errors.language} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="organisation">{t('Organisation name')}</Label>
                         <Input
                             id="organisation"
                             value={data.organisation}
                             onChange={(e) => setData('organisation', e.target.value)}
-                            placeholder="Acme Ltd"
+                            placeholder={t('Acme Ltd')}
                         />
                         <InputError message={errors.organisation} />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
-                            <Label htmlFor="contact_email">Contact email</Label>
+                            <Label htmlFor="contact_email">{t('Contact email')}</Label>
                             <Input
                                 id="contact_email"
                                 type="email"
@@ -143,7 +182,7 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="contact_phone">
-                                Phone <span className="text-muted-foreground font-normal">(optional)</span>
+                                {t('Phone')} <span className="text-muted-foreground font-normal">{t('(optional)')}</span>
                             </Label>
                             <Input
                                 id="contact_phone"
@@ -154,7 +193,7 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                         </div>
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="conformance_override">Conformance status</Label>
+                        <Label htmlFor="conformance_override">{t('Conformance status')}</Label>
                         <select
                             id="conformance_override"
                             value={data.conformance_override}
@@ -162,31 +201,35 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                             className="border-input bg-background h-9 rounded-md border px-3 text-sm"
                             aria-describedby="conformance-help"
                         >
-                            <option value="">Automatic: {conformanceLabels[preview.suggested]}</option>
+                            <option value="">{t('Automatic: {status}', { status: t(conformanceLabels[preview.suggested]) })}</option>
                             {Object.entries(conformanceLabels).map(([value, label]) => (
                                 <option key={value} value={value}>
-                                    {label}
+                                    {t(label)}
                                 </option>
                             ))}
                         </select>
                         <p id="conformance-help" className="text-muted-foreground text-xs">
-                            Automatic uses your checklist and open issues. Choose a status yourself only if an auditor has assessed the site.
+                            {t('Automatic uses your checklist and open issues. Choose a status yourself only if an auditor has assessed the site.')}
                         </p>
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="additional_limitations">Other known limitations</Label>
+                        <Label htmlFor="additional_limitations">{t('Other known limitations')}</Label>
                         <textarea
                             id="additional_limitations"
                             rows={4}
                             value={data.additional_limitations}
                             onChange={(e) => setData('additional_limitations', e.target.value)}
                             className={textareaClass}
-                            placeholder="For example: PDF documents published before 2024 are not fully accessible. We plan to replace them by June 2027."
+                            placeholder={t(
+                                'For example: PDF documents published before 2024 are not fully accessible. We plan to replace them by June 2027.',
+                            )}
                         />
-                        <p className="text-muted-foreground text-xs">Failing checklist items and automated findings are listed automatically.</p>
+                        <p className="text-muted-foreground text-xs">
+                            {t('Failing checklist items and automated findings are listed automatically.')}
+                        </p>
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="feedback_process">Feedback process</Label>
+                        <Label htmlFor="feedback_process">{t('Feedback process')}</Label>
                         <textarea
                             id="feedback_process"
                             rows={3}
@@ -197,7 +240,7 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="enforcement_procedure">
-                            Enforcement procedure <span className="text-muted-foreground font-normal">(optional)</span>
+                            {t('Enforcement procedure')} <span className="text-muted-foreground font-normal">{t('(optional)')}</span>
                         </Label>
                         <textarea
                             id="enforcement_procedure"
@@ -205,22 +248,20 @@ export default function StatementEditor({ site, statement, preview, conformanceL
                             value={data.enforcement_procedure}
                             onChange={(e) => setData('enforcement_procedure', e.target.value)}
                             className={textareaClass}
-                            placeholder="Which authority people can contact if they are not satisfied with our response."
+                            placeholder={t('Which authority people can contact if they are not satisfied with our response.')}
                         />
                     </div>
                     <Button type="submit" disabled={processing || !isDirty} className="w-fit">
                         {processing && <LoaderCircle className="animate-spin" aria-hidden="true" />}
-                        Save statement
+                        {t('Save statement')}
                     </Button>
                 </form>
 
                 <section aria-labelledby="preview-heading" className="bg-card rounded-xl border shadow-xs">
                     <h2 id="preview-heading" className="text-muted-foreground border-b px-5 py-3 text-sm font-semibold">
-                        Preview {isDirty && '(save to update)'}
+                        {isDirty ? t('Preview (save to update)') : t('Preview')}
                     </h2>
-                    <div className="p-6">
-                        <StatementDocument s={preview} headingLevel={2} />
-                    </div>
+                    <div className="p-6">{previewTr && <StatementDocument s={preview} headingLevel={2} tr={previewTr} />}</div>
                 </section>
             </div>
         </SiteLayout>

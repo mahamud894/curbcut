@@ -105,6 +105,12 @@ Click **Audit report (PDF)** on any site to download a report you can send to a 
 
 The PDF is tagged, with headings, bookmarks and reading order, so it is accessible to screen reader users too. Every download is recorded in the site's activity history.
 
+## Languages
+
+Pick your language from the menu on the sign-in page, or under **Settings → Appearance** once signed in. Curbcut remembers it on your account and sends your emails in it too.
+
+A site's accessibility statement and audit reports use the site's own language, chosen in the statement editor. This way you can work in English and still publish a statement in Dutch for a Dutch client.
+
 ## Activity history
 
 Every assignment, dismissal, comment, checklist change, statement change and report download is recorded with who did it and when. Recent activity appears on the site overview and on each issue, and the audit report includes it.

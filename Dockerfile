@@ -13,6 +13,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY resources ./resources
+COPY lang ./lang
 COPY public ./public
 COPY vite.config.js tsconfig.json components.json ./
 RUN npm run build \
@@ -36,9 +37,9 @@ LABEL org.opencontainers.image.source="https://github.com/mahamud894/curbcut" \
 
 # Chromium does the scanning and the PDF reports; the fonts keep reports readable.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends chromium fonts-liberation fonts-noto-core fonts-noto-color-emoji sqlite3 libpq-dev \
+ && apt-get install -y --no-install-recommends chromium fonts-liberation fonts-noto-core fonts-noto-color-emoji sqlite3 libpq-dev libicu-dev \
  && rm -rf /var/lib/apt/lists/* \
- && docker-php-ext-install -j"$(nproc)" opcache pcntl pdo_mysql pdo_pgsql \
+ && docker-php-ext-install -j"$(nproc)" opcache pcntl pdo_mysql pdo_pgsql intl \
  && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
  && a2enmod rewrite headers
 

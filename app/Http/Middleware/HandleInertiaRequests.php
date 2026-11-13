@@ -41,6 +41,9 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             ...parent::share($request),
             'name' => config('app.name'),
+            // A closure, so a controller that switches language (public statement) is reflected.
+            'locale' => fn () => app()->getLocale(),
+            'locales' => config('locales'),
             'canRegister' => (bool) config('curbcut.registration'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [

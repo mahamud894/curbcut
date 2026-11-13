@@ -59,7 +59,7 @@ class SiteController extends Controller
             $start($site);
         }
 
-        return to_route('sites.show', $site)->with('success', 'Site added. The first scan has started.');
+        return to_route('sites.show', $site)->with('success', tr('Site added. The first scan has started.'));
     }
 
     public function show(Site $site): Response
@@ -206,7 +206,7 @@ class SiteController extends Controller
         $data['url'] = UrlTools::normalize($data['url']);
         $site->update($data);
 
-        return back()->with('success', 'Settings saved.');
+        return back()->with('success', tr('Settings saved.'));
     }
 
     public function destroy(Site $site): RedirectResponse
@@ -214,7 +214,7 @@ class SiteController extends Controller
         $this->authorize('delete', $site);
         $site->delete();
 
-        return to_route('sites.index')->with('success', 'Site deleted.');
+        return to_route('sites.index')->with('success', tr('Site deleted.'));
     }
 
     public function startScan(Site $site, StartScan $start): RedirectResponse
@@ -222,8 +222,8 @@ class SiteController extends Controller
         $this->authorize('update', $site);
 
         return $start($site)
-            ? back()->with('success', 'Scan started.')
-            : back()->with('error', 'A scan is already running for this site.');
+            ? back()->with('success', tr('Scan started.'))
+            : back()->with('error', tr('A scan is already running for this site.'));
     }
 
     public static function summary(Site $site): array

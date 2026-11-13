@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SiteLayout from '@/layouts/site-layout';
-import { formatDate, relativeTime } from '@/lib/format';
+import { capitalize, formatDate, formatDay, relativeTime } from '@/lib/format';
+import { t, tRich } from '@/lib/i18n';
 import type { ActivityRow, IssueRow, SiteSummary, TeamMember } from '@/types/curbcut';
 import type { RequestPayload } from '@inertiajs/core';
 import { Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, BookOpen, CalendarClock, ExternalLink, EyeOff, RotateCcw } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 
 interface IssueDetail extends IssueRow {
     assignee: TeamMember | null;
@@ -44,7 +45,7 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                 href={`/sites/${site.id}/issues`}
                 className="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1 text-sm"
             >
-                <ArrowLeft className="size-4" aria-hidden="true" /> All issues
+                <ArrowLeft className="size-4" aria-hidden="true" /> {t('All issues')}
             </Link>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -55,7 +56,7 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                             <StatusPill issue={issue} />
                             {issue.overdue && (
                                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-950 dark:text-red-200">
-                                    Overdue
+                                    {t('Overdue')}
                                 </span>
                             )}
                         </div>
@@ -66,7 +67,7 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
 
                         <dl className="mt-5 grid gap-4 text-sm">
                             <div>
-                                <dt className="text-muted-foreground text-xs font-medium uppercase">Page</dt>
+                                <dt className="text-muted-foreground text-xs font-medium uppercase">{t('Page')}</dt>
                                 <dd>
                                     <a
                                         href={issue.page.url}
@@ -75,18 +76,18 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                                         className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
                                     >
                                         {issue.page.title || issue.page.url} <ExternalLink className="size-3.5" aria-hidden="true" />
-                                        <span className="sr-only">(opens in a new tab)</span>
+                                        <span className="sr-only">{t('(opens in a new tab)')}</span>
                                     </a>
                                     <span className="text-muted-foreground block text-xs">{issue.page.url}</span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-muted-foreground text-xs font-medium uppercase">Element</dt>
+                                <dt className="text-muted-foreground text-xs font-medium uppercase">{t('Element')}</dt>
                                 <dd className="font-mono text-xs break-all">{issue.target}</dd>
                             </div>
                             {issue.html && (
                                 <div>
-                                    <dt className="text-muted-foreground text-xs font-medium uppercase">HTML</dt>
+                                    <dt className="text-muted-foreground text-xs font-medium uppercase">{t('HTML')}</dt>
                                     <dd>
                                         <pre className="bg-muted mt-1 overflow-x-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">
                                             {issue.html}
@@ -96,15 +97,15 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                             )}
                             {issue.failure_summary && (
                                 <div>
-                                    <dt className="text-muted-foreground text-xs font-medium uppercase">How to fix</dt>
+                                    <dt className="text-muted-foreground text-xs font-medium uppercase">{t('How to fix')}</dt>
                                     <dd className="whitespace-pre-line">{issue.failure_summary}</dd>
                                 </div>
                             )}
                             <div>
-                                <dt className="text-muted-foreground text-xs font-medium uppercase">WCAG success criteria</dt>
+                                <dt className="text-muted-foreground text-xs font-medium uppercase">{t('WCAG success criteria')}</dt>
                                 <dd className="flex flex-wrap gap-2">
                                     {issue.criteria.length === 0 ? (
-                                        <span className="text-muted-foreground">Best practice (not a WCAG requirement)</span>
+                                        <span className="text-muted-foreground">{t('Best practice (not a WCAG requirement)')}</span>
                                     ) : (
                                         issue.criteria.map((c) => (
                                             <a
@@ -115,7 +116,7 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                                                 className="bg-muted rounded px-2 py-1 text-xs font-medium underline-offset-4 hover:underline"
                                             >
                                                 {c.id} {c.title}
-                                                <span className="sr-only"> (opens in a new tab)</span>
+                                                <span className="sr-only">{t('(opens in a new tab)')}</span>
                                             </a>
                                         ))
                                     )}
@@ -130,8 +131,8 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                                 rel="noreferrer"
                                 className="mt-5 inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline"
                             >
-                                <BookOpen className="size-4" aria-hidden="true" /> Detailed guidance from Deque
-                                <span className="sr-only">(opens in a new tab)</span>
+                                <BookOpen className="size-4" aria-hidden="true" /> {t('Detailed guidance from Deque')}
+                                <span className="sr-only">{t('(opens in a new tab)')}</span>
                             </a>
                         )}
                     </section>
@@ -139,20 +140,20 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                     <Comments base={base} comments={issue.comments} />
                 </div>
 
-                <aside aria-label="Issue workflow" className="grid content-start gap-4">
+                <aside aria-label={t('Issue workflow')} className="grid content-start gap-4">
                     <section aria-labelledby="triage-heading" className="bg-card grid gap-4 rounded-xl border p-5 shadow-xs">
                         <h2 id="triage-heading" className="font-semibold">
-                            Workflow
+                            {t('Workflow')}
                         </h2>
                         <div className="grid gap-2">
-                            <Label htmlFor="assignee">Assignee</Label>
+                            <Label htmlFor="assignee">{t('Assignee')}</Label>
                             <select
                                 id="assignee"
                                 className={selectClass}
                                 value={issue.assignee?.id ?? ''}
                                 onChange={(e) => update({ assignee_id: e.target.value ? Number(e.target.value) : null })}
                             >
-                                <option value="">Unassigned</option>
+                                <option value="">{t('Unassigned')}</option>
                                 {team.map((m) => (
                                     <option key={m.id} value={m.id}>
                                         {m.name}
@@ -161,7 +162,7 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                             </select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="due_on">Due date</Label>
+                            <Label htmlFor="due_on">{t('Due date')}</Label>
                             <Input
                                 id="due_on"
                                 type="date"
@@ -170,7 +171,10 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
                             />
                             {issue.due_on && (
                                 <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                                    <CalendarClock className="size-3.5" aria-hidden="true" /> {issue.overdue ? 'Overdue since' : 'Due'} {issue.due_on}
+                                    <CalendarClock className="size-3.5" aria-hidden="true" />{' '}
+                                    {issue.overdue
+                                        ? t('Overdue since {date}', { date: formatDay(issue.due_on) })
+                                        : t('Due {date}', { date: formatDay(issue.due_on) })}
                                 </p>
                             )}
                         </div>
@@ -184,27 +188,41 @@ export default function IssueShow({ site, issue, activity, team, dismissReasons 
 
                     <section aria-labelledby="history-heading" className="bg-card rounded-xl border p-5 shadow-xs">
                         <h2 id="history-heading" className="mb-3 font-semibold">
-                            History
+                            {t('History')}
                         </h2>
                         <ul className="text-muted-foreground mb-4 grid gap-1 text-xs">
                             {issue.first_seen_scan_id && (
                                 <li>
-                                    First found in{' '}
-                                    <Link className="underline-offset-4 hover:underline" href={`/sites/${site.id}/scans/${issue.first_seen_scan_id}`}>
-                                        scan #{issue.first_seen_scan_id}
-                                    </Link>
+                                    {tRich('First found in <link>scan #{id}</link>', {
+                                        id: issue.first_seen_scan_id,
+                                        link: (c: ReactNode) => (
+                                            <Link
+                                                className="underline-offset-4 hover:underline"
+                                                href={`/sites/${site.id}/scans/${issue.first_seen_scan_id}`}
+                                            >
+                                                {c}
+                                            </Link>
+                                        ),
+                                    })}
                                 </li>
                             )}
                             {issue.fixed_in_scan_id && (
                                 <li>
-                                    Fixed in{' '}
-                                    <Link className="underline-offset-4 hover:underline" href={`/sites/${site.id}/scans/${issue.fixed_in_scan_id}`}>
-                                        scan #{issue.fixed_in_scan_id}
-                                    </Link>
+                                    {tRich('Fixed in <link>scan #{id}</link>', {
+                                        id: issue.fixed_in_scan_id,
+                                        link: (c: ReactNode) => (
+                                            <Link
+                                                className="underline-offset-4 hover:underline"
+                                                href={`/sites/${site.id}/scans/${issue.fixed_in_scan_id}`}
+                                            >
+                                                {c}
+                                            </Link>
+                                        ),
+                                    })}
                                 </li>
                             )}
                         </ul>
-                        <ActivityList items={activity} empty="No changes yet." />
+                        <ActivityList items={activity} empty={t('No changes yet.')} />
                     </section>
                 </aside>
             </div>
@@ -218,7 +236,7 @@ function StatusPill({ issue }: { issue: IssueDetail }) {
         fixed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
         dismissed: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
     };
-    return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${styles[issue.status]}`}>{issue.status}</span>;
+    return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${styles[issue.status]}`}>{t(capitalize(issue.status))}</span>;
 }
 
 function DismissControl({
@@ -242,13 +260,15 @@ function DismissControl({
         return (
             <div className="bg-muted grid gap-2 rounded-lg p-3 text-sm">
                 <p>
-                    <span className="font-medium">Dismissed as {reasons[issue.dismissed_reason ?? '']?.toLowerCase() ?? issue.dismissed_reason}</span>
+                    <span className="font-medium">
+                        {t('Dismissed: {reason}', { reason: t(reasons[issue.dismissed_reason ?? ''] ?? issue.dismissed_reason ?? '') })}
+                    </span>
                     {issue.dismissed_by && ` by ${issue.dismissed_by}`} {issue.dismissed_at && relativeTime(issue.dismissed_at)}.
                 </p>
                 {issue.dismissed_note && <p className="text-muted-foreground">“{issue.dismissed_note}”</p>}
-                <p className="text-muted-foreground text-xs">Dismissed issues don't count towards the score.</p>
+                <p className="text-muted-foreground text-xs">{t("Dismissed issues don't count towards the score.")}</p>
                 <Button variant="outline" size="sm" onClick={onRestore} className="w-fit">
-                    <RotateCcw aria-hidden="true" /> Reopen
+                    <RotateCcw aria-hidden="true" /> {t('Reopen')}
                 </Button>
             </div>
         );
@@ -257,7 +277,7 @@ function DismissControl({
     if (!open) {
         return (
             <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="w-fit">
-                <EyeOff aria-hidden="true" /> Dismiss…
+                <EyeOff aria-hidden="true" /> {t('Dismiss…')}
             </Button>
         );
     }
@@ -271,33 +291,33 @@ function DismissControl({
             }}
         >
             <div className="grid gap-2">
-                <Label htmlFor="dismiss-reason">Reason</Label>
+                <Label htmlFor="dismiss-reason">{t('Reason')}</Label>
                 <select id="dismiss-reason" className={selectClass} value={reason} onChange={(e) => setReason(e.target.value)}>
                     {Object.entries(reasons).map(([value, label]) => (
                         <option key={value} value={value}>
-                            {label}
+                            {t(label)}
                         </option>
                     ))}
                 </select>
             </div>
             <div className="grid gap-2">
-                <Label htmlFor="dismiss-note">Justification</Label>
+                <Label htmlFor="dismiss-note">{t('Justification')}</Label>
                 <textarea
                     id="dismiss-note"
                     rows={3}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     className="border-input bg-background rounded-md border px-3 py-2 text-sm"
-                    placeholder="Why this does not need fixing"
+                    placeholder={t('Why this does not need fixing')}
                 />
-                <p className="text-muted-foreground text-xs">Kept in the audit trail.</p>
+                <p className="text-muted-foreground text-xs">{t('Kept in the audit trail.')}</p>
             </div>
             <div className="flex gap-2">
                 <Button type="submit" size="sm">
-                    Dismiss issue
+                    {t('Dismiss issue')}
                 </Button>
                 <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
-                    Cancel
+                    {t('Cancel')}
                 </Button>
             </div>
         </form>
@@ -314,14 +334,14 @@ function Comments({ base, comments }: { base: string; comments: IssueDetail['com
     return (
         <section aria-labelledby="comments-heading" className="bg-card rounded-xl border p-5 shadow-xs">
             <h2 id="comments-heading" className="mb-4 font-semibold">
-                Comments ({comments.length})
+                {t('Comments ({count})', { count: comments.length })}
             </h2>
             {comments.length > 0 && (
                 <ol className="mb-5 grid gap-4">
                     {comments.map((c) => (
                         <li key={c.id} className="text-sm">
                             <p>
-                                <span className="font-semibold">{c.user ?? 'Former member'}</span>{' '}
+                                <span className="font-semibold">{c.user ?? t('Former member')}</span>{' '}
                                 <time className="text-muted-foreground text-xs" dateTime={c.created_at ?? undefined}>
                                     {formatDate(c.created_at)}
                                 </time>
@@ -332,7 +352,7 @@ function Comments({ base, comments }: { base: string; comments: IssueDetail['com
                 </ol>
             )}
             <form onSubmit={submit} className="grid gap-2">
-                <Label htmlFor="comment-body">Add a comment</Label>
+                <Label htmlFor="comment-body">{t('Add a comment')}</Label>
                 <textarea
                     id="comment-body"
                     rows={3}
@@ -342,7 +362,7 @@ function Comments({ base, comments }: { base: string; comments: IssueDetail['com
                 />
                 <InputError message={errors.body} />
                 <Button type="submit" size="sm" disabled={processing || !data.body.trim()} className="w-fit">
-                    Comment
+                    {t('Comment')}
                 </Button>
             </form>
         </section>

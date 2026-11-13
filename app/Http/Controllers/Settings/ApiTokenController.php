@@ -37,13 +37,13 @@ class ApiTokenController extends Controller
         $abilities = $request->boolean('can_scan') ? self::ABILITIES : ['read'];
         $token = $request->user()->createToken($data['name'], $abilities);
 
-        return back()->with('newToken', $token->plainTextToken)->with('success', 'Token created. Copy it now: it will not be shown again.');
+        return back()->with('newToken', $token->plainTextToken)->with('success', tr('Token created. Copy it now: it will not be shown again.'));
     }
 
     public function destroy(Request $request, int $token): RedirectResponse
     {
         $request->user()->tokens()->whereKey($token)->delete();
 
-        return back()->with('success', 'Token revoked.');
+        return back()->with('success', tr('Token revoked.'));
     }
 }

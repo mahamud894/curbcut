@@ -2,6 +2,7 @@ import { Flash } from '@/components/curbcut/flash';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { relativeTime } from '@/lib/format';
+import { t, tk } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { SiteSummary } from '@/types/curbcut';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -9,12 +10,12 @@ import { Download, ExternalLink, LoaderCircle, Play } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 
 const tabs = [
-    { label: 'Overview', suffix: '' },
-    { label: 'Issues', suffix: '/issues' },
-    { label: 'Pages', suffix: '/pages' },
-    { label: 'Checklist', suffix: '/checklist' },
-    { label: 'Statement', suffix: '/statement' },
-    { label: 'Settings', suffix: '/settings' },
+    { label: tk('Overview'), suffix: '' },
+    { label: tk('Issues'), suffix: '/issues' },
+    { label: tk('Pages'), suffix: '/pages' },
+    { label: tk('Checklist'), suffix: '/checklist' },
+    { label: tk('Statement'), suffix: '/statement' },
+    { label: tk('Settings'), suffix: '/settings' },
 ];
 
 export default function SiteLayout({ site, title, children }: { site: SiteSummary; title: string; children: ReactNode }) {
@@ -35,7 +36,7 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Sites', href: '/sites' },
+                { title: tk('Sites'), href: '/sites' },
                 { title: site.name, href: base },
             ]}
         >
@@ -52,18 +53,22 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
                         >
                             {site.url}
                             <ExternalLink className="size-3.5" aria-hidden="true" />
-                            <span className="sr-only">(opens in a new tab)</span>
+                            <span className="sr-only">{t('(opens in a new tab)')}</span>
                         </a>
                         <p className="text-muted-foreground mt-1 text-xs">
-                            Last scanned {relativeTime(site.last_scanned_at)} ·{' '}
-                            {site.scan_frequency === 'manual' ? 'Manual scans' : `Scans ${site.scan_frequency}`}
+                            {t('Last scanned {when}', { when: relativeTime(site.last_scanned_at) })} ·{' '}
+                            {site.scan_frequency === 'manual'
+                                ? t('Manual scans')
+                                : site.scan_frequency === 'daily'
+                                  ? t('Scans daily')
+                                  : t('Scans weekly')}
                         </p>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
                         <Button variant="outline" asChild>
                             <a href={`${base}/report`} download>
                                 <Download aria-hidden="true" />
-                                Audit report (PDF)
+                                {t('Audit report (PDF)')}
                             </a>
                         </Button>
                         <Button
@@ -72,7 +77,7 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
                             className="shrink-0"
                         >
                             {active ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Play aria-hidden="true" />}
-                            {active ? 'Scanning…' : 'Scan now'}
+                            {active ? t('Scanning…') : t('Scan now')}
                         </Button>
                     </div>
                 </div>
@@ -84,10 +89,10 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
                         className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100"
                     >
                         <div className="flex items-center justify-between gap-4 font-medium">
-                            <span>{scan.status === 'queued' ? 'Scan queued, waiting for a worker…' : 'Scanning pages…'}</span>
+                            <span>{scan.status === 'queued' ? t('Scan queued, waiting for a worker…') : t('Scanning pages…')}</span>
                             {scan.pages_total > 0 && (
                                 <span className="tabular-nums">
-                                    {scan.pages_scanned + scan.pages_failed} / {scan.pages_total} pages
+                                    {t('{done} / {total} pages', { done: scan.pages_scanned + scan.pages_failed, total: scan.pages_total })}
                                 </span>
                             )}
                         </div>
@@ -104,7 +109,7 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
 
                 <Flash />
 
-                <nav aria-label="Site sections" className="border-b">
+                <nav aria-label={t('Site sections')} className="border-b">
                     <ul className="-mb-px flex gap-1 overflow-x-auto">
                         {tabs.map((tab) => {
                             const href = `${base}${tab.suffix}`;
@@ -121,7 +126,7 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
                                                 : 'text-muted-foreground hover:text-foreground border-transparent',
                                         )}
                                     >
-                                        {tab.label}
+                                        {t(tab.label)}
                                         {tab.label === 'Issues' && site.open_issues_count > 0 && (
                                             <span className="bg-muted text-foreground ml-2 rounded-full px-2 text-xs leading-5 tabular-nums">
                                                 {site.open_issues_count}

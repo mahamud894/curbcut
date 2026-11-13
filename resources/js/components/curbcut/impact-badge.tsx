@@ -1,3 +1,4 @@
+import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { Impact } from '@/types/curbcut';
 
@@ -27,7 +28,7 @@ export function ImpactBadge({ impact, className }: { impact: Impact; className?:
                 className,
             )}
         >
-            {impact}
+            {t(impact)}
         </span>
     );
 }

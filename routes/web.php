@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SiteController;
@@ -13,6 +14,9 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
+
+// Interface language, for signed-in and signed-out visitors.
+Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
 
 // Public accessibility statements (no login required).
 Route::get('accessibility-statement/{token}', [StatementController::class, 'public'])->name('statement.public');

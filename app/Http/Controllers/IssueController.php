@@ -54,7 +54,7 @@ class IssueController extends Controller
 
         $workflow->apply($site, [$issue], $this->validatedChanges($request, $site), $request->user());
 
-        return back()->with('success', 'Issue updated.');
+        return back()->with('success', tr('Issue updated.'));
     }
 
     /** Apply the same change to many issues: selected ids, or every issue of one rule. */
@@ -74,7 +74,7 @@ class IssueController extends Controller
 
         $count = $workflow->apply($site, $issues, $this->validatedChanges($request, $site), $request->user());
 
-        return back()->with('success', $count === 1 ? '1 issue updated.' : "{$count} issues updated.");
+        return back()->with('success', tr('{count, plural, one {# issue updated.} other {# issues updated.}}', ['count' => $count]));
     }
 
     public function comment(Request $request, Site $site, Issue $issue): RedirectResponse
@@ -86,7 +86,7 @@ class IssueController extends Controller
         $issue->comments()->create(['user_id' => $request->user()->id, 'body' => $data['body']]);
         Activity::record($site, $request->user(), 'issue.commented', $issue, ['issue' => $issue->help]);
 
-        return back()->with('success', 'Comment added.');
+        return back()->with('success', tr('Comment added.'));
     }
 
     /** @return array<string, mixed> */
@@ -99,7 +99,7 @@ class IssueController extends Controller
             'dismiss.reason' => ['required_with:dismiss', Rule::in(array_keys(Issue::DISMISS_REASONS))],
             'dismiss.note' => ['nullable', 'string', 'max:2000'],
             'restore' => ['sometimes', 'boolean'],
-        ], ['assignee_id.in' => 'Issues can only be assigned to people who have access to this site.']);
+        ], ['assignee_id.in' => tr('Issues can only be assigned to people who have access to this site.')]);
 
         return array_intersect_key($data, array_flip(['assignee_id', 'due_on', 'dismiss', 'restore']));
     }

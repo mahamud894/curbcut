@@ -53,11 +53,16 @@ class ChecklistController extends Controller
             ]);
         }
 
-        return back()->with('success', "{$criterion} {$this->label($item->status)}.");
+        return back()->with('success', tr($this->label($item->status), ['criterion' => $criterion]));
     }
 
     private function label(string $status): string
     {
-        return ['pass' => 'marked as passing', 'fail' => 'marked as failing', 'not_applicable' => 'marked as not applicable', 'not_tested' => 'reset to not tested'][$status];
+        return [
+            'pass' => tk('{criterion} marked as passing.'),
+            'fail' => tk('{criterion} marked as failing.'),
+            'not_applicable' => tk('{criterion} marked as not applicable.'),
+            'not_tested' => tk('{criterion} reset to not tested.'),
+        ][$status];
     }
 }

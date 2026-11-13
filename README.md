@@ -18,7 +18,7 @@ Curbcut scans your websites against WCAG 2.2 AA with [axe-core](https://github.c
 
 </div>
 
-> **Status:** early development, ready to try. Scanning, issue tracking, the team workflow, the WCAG checklist, accessibility statements, PDF audit reports and multi-client workspaces work today. See the [roadmap](#roadmap) for what comes next.
+> **Status:** early development, ready to try. Scanning, issue tracking, the team workflow, the WCAG checklist, accessibility statements, PDF audit reports, multi-client workspaces, the REST API, the GitHub Action and 26 languages work today. See the [roadmap](#roadmap) for what comes next.
 
 ## Quick start
 
@@ -53,6 +53,9 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 - **Accessibility statement.** Generated from the checklist and the latest scan, following the structure of the EU model statement: conformance status, known limitations, feedback and contact, enforcement procedure and how the site was assessed. Publish it as a public page that updates itself.
 - **PDF audit reports.** One click produces a tagged, accessible PDF with the score, conformance status, checklist results, open problems with fixes, dismissed issues and the audit trail, ready to send to a client or an auditor.
 - **Workspaces for teams and agencies.** Group sites into workspaces, one per team or client, with owner, admin and member roles. Switch between them in one click, and see every client's score, critical and overdue issues on one overview. Give a client's developer guest access to a single site.
+- **REST API.** Read sites, scans, issues, pages and reports, and start scans from scripts and CI with personal access tokens. See the [API reference](docs/api.md).
+- **GitHub Action.** Scan a preview deployment on every pull request and fail the check when it adds new accessibility problems, with a summary in the job. See [GitHub Action](docs/github-action.md).
+- **26 languages.** The interface, emails, statements and PDF reports are available in all 24 official EU languages, Russian and Bengali. Each site has its own statement language.
 - **Audit trail.** Every assignment, dismissal, comment, checklist result, statement change and report download is recorded with who did it and when.
 - **Safe by default.** Private and local network addresses are blocked unless you allow them, to prevent server-side request forgery.
 - **Accessible itself.** Curbcut's own screens are checked with axe-core and pass its WCAG 2.2 AA and best-practice rules.
@@ -74,7 +77,8 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 - [x] **Phase 1 — Scan and track:** site management, page discovery, axe-core scanner, new/fixed comparison, score, dashboard, scheduled scans
 - [x] **Phase 2 — Compliance workflow:** site members, assign issues with due dates and comments, dismiss with justification, manual WCAG 2.2 checklist, accessibility statement generator with a public page, audit trail
 - [x] **Phase 3 — Ready for teams:** PDF audit reports, workspaces with roles for teams and agencies, one-command Docker install, documentation
-- [ ] **Phase 4 — Developer workflow:** GitHub Action that fails pull requests on new issues, REST API, optional AI fix suggestions, translations
+- [x] **Phase 4 — Developer workflow:** GitHub Action that fails pull requests on new issues, REST API, translations into 26 languages
+- [ ] **Next:** optional AI fix suggestions, reviewed translations from native speakers, translated axe-core rule texts
 
 ## How it works
 
@@ -110,7 +114,9 @@ A criterion with open automated issues counts as failing even if the checklist s
 - [Docker](docs/docker.md): install, settings, updates, backups and HTTPS
 - [Installing without Docker](docs/installation.md): Nginx, systemd and cron, plus the development setup
 - [Configuration](docs/configuration.md): every setting and the `curbcut:user` and `curbcut:scan` commands
-- [User guide](docs/user-guide.md): workspaces and roles, scans, issues, the checklist, statements and reports
+- [User guide](docs/user-guide.md): workspaces and roles, scans, issues, the checklist, statements, reports and languages
+- [REST API](docs/api.md): tokens, endpoints and examples
+- [GitHub Action](docs/github-action.md): fail pull requests that add accessibility problems
 
 ### Without Docker, in short
 

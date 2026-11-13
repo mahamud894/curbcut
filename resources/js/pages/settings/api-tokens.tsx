@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { formatDate, relativeTime } from '@/lib/format';
+import { t, tk } from '@/lib/i18n';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Check, Copy } from 'lucide-react';
@@ -15,7 +16,7 @@ import { FormEventHandler, useState } from 'react';
 
 type Token = { id: number; name: string; abilities: string[]; last_used_at: string | null; created_at: string };
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'API tokens', href: '/settings/api-tokens' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: tk('API tokens'), href: '/settings/api-tokens' }];
 
 export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[]; newToken: string | null; apiUrl: string }) {
     const { data, setData, post, processing, errors, reset } = useForm<{ name: string; can_scan: boolean }>({ name: '', can_scan: false });
@@ -33,20 +34,20 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
     };
 
     const revoke = (token: Token) => {
-        if (window.confirm(`Revoke "${token.name}"? Anything using it will stop working.`)) {
+        if (window.confirm(t('Revoke “{name}”? Anything using it will stop working.', { name: token.name }))) {
             router.delete(route('api-tokens.destroy', token.id), { preserveScroll: true });
         }
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="API tokens" />
+            <Head title={t('API tokens')} />
 
             <SettingsLayout>
                 <div className="space-y-8">
                     <HeadingSmall
-                        title="API tokens"
-                        description="Tokens let scripts, CI pipelines and the Curbcut GitHub Action use the REST API with your access."
+                        title={t('API tokens')}
+                        description={t('Tokens let scripts, CI pipelines and the Curbcut GitHub Action use the REST API with your access.')}
                     />
 
                     <Flash />
@@ -54,7 +55,7 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
                     {newToken && (
                         <div className="space-y-2 rounded-lg border p-4">
                             <p className="text-sm font-medium" id="new-token-label">
-                                Your new token. Copy it now: you won't be able to see it again.
+                                {t("Your new token. Copy it now: you won't be able to see it again.")}
                             </p>
                             <div className="flex gap-2">
                                 <Input
@@ -66,16 +67,16 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
                                 />
                                 <Button type="button" variant="outline" onClick={copy}>
                                     {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-                                    {copied ? 'Copied' : 'Copy'}
+                                    {copied ? t('Copied') : t('Copy')}
                                 </Button>
                             </div>
                         </div>
                     )}
 
                     <form onSubmit={submit} className="space-y-4">
-                        <h3 className="text-base font-semibold">Create a token</h3>
+                        <h3 className="text-base font-semibold">{t('Create a token')}</h3>
                         <div className="grid gap-2">
-                            <Label htmlFor="token-name">Name</Label>
+                            <Label htmlFor="token-name">{t('Name')}</Label>
                             <Input
                                 id="token-name"
                                 value={data.name}
@@ -85,41 +86,45 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
                                 aria-describedby="token-name-hint"
                             />
                             <p id="token-name-hint" className="text-muted-foreground text-sm">
-                                Something that reminds you where the token is used.
+                                {t('Something that reminds you where the token is used.')}
                             </p>
                             <InputError message={errors.name} />
                         </div>
                         <div className="flex items-start gap-3">
                             <Checkbox id="can-scan" checked={data.can_scan} onCheckedChange={(v) => setData('can_scan', v === true)} />
                             <div className="grid gap-1">
-                                <Label htmlFor="can-scan">Allow starting scans and checks</Label>
+                                <Label htmlFor="can-scan">{t('Allow starting scans and checks')}</Label>
                                 <p className="text-muted-foreground text-sm">
-                                    Needed for the GitHub Action. Without it the token can only read sites, scans, issues and reports.
+                                    {t('Needed for the GitHub Action. Without it the token can only read sites, scans, issues and reports.')}
                                 </p>
                             </div>
                         </div>
-                        <Button disabled={processing}>Create token</Button>
+                        <Button disabled={processing}>{t('Create token')}</Button>
                     </form>
 
                     <section aria-labelledby="tokens-heading" className="space-y-3">
                         <h3 id="tokens-heading" className="text-base font-semibold">
-                            Your tokens
+                            {t('Your tokens')}
                         </h3>
                         {tokens.length === 0 ? (
-                            <p className="text-muted-foreground text-sm">You have no tokens yet.</p>
+                            <p className="text-muted-foreground text-sm">{t('You have no tokens yet.')}</p>
                         ) : (
                             <ul className="divide-y rounded-lg border">
-                                {tokens.map((t) => (
-                                    <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                                {tokens.map((token) => (
+                                    <li key={token.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                                         <div className="min-w-0">
-                                            <p className="truncate font-medium">{t.name}</p>
+                                            <p className="truncate font-medium">{token.name}</p>
                                             <p className="text-muted-foreground text-sm">
-                                                {t.abilities.includes('scan') ? 'Read and scan' : 'Read only'} · created {formatDate(t.created_at)} ·{' '}
-                                                {t.last_used_at ? `last used ${relativeTime(t.last_used_at)}` : 'never used'}
+                                                {token.abilities.includes('scan') ? t('Read and scan') : t('Read only')} ·{' '}
+                                                {t('created {date}', { date: formatDate(token.created_at) })} ·{' '}
+                                                {token.last_used_at
+                                                    ? t('last used {when}', { when: relativeTime(token.last_used_at) })
+                                                    : t('never used')}
                                             </p>
                                         </div>
-                                        <Button type="button" variant="outline" size="sm" onClick={() => revoke(t)}>
-                                            Revoke<span className="sr-only"> {t.name}</span>
+                                        <Button type="button" variant="outline" size="sm" onClick={() => revoke(token)}>
+                                            {t('Revoke')}
+                                            <span className="sr-only"> {token.name}</span>
                                         </Button>
                                     </li>
                                 ))}
@@ -129,9 +134,9 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
 
                     <section aria-labelledby="usage-heading" className="space-y-2">
                         <h3 id="usage-heading" className="text-base font-semibold">
-                            Using the API
+                            {t('Using the API')}
                         </h3>
-                        <p className="text-muted-foreground text-sm">Send the token in the Authorization header:</p>
+                        <p className="text-muted-foreground text-sm">{t('Send the token in the Authorization header:')}</p>
                         <pre className="bg-muted overflow-x-auto rounded-md p-3 text-xs">
                             <code>{`curl -H "Authorization: Bearer YOUR_TOKEN" ${apiUrl}/sites`}</code>
                         </pre>
@@ -142,7 +147,7 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
                                 target="_blank"
                                 rel="noreferrer"
                             >
-                                API reference (opens in a new tab)
+                                {t('API reference (opens in a new tab)')}
                             </a>
                         </p>
                     </section>

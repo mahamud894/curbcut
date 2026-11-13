@@ -14,9 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SiteLayout from '@/layouts/site-layout';
+import { t, tRich } from '@/lib/i18n';
 import type { SiteSummary } from '@/types/curbcut';
 import { router, useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 
 interface Person {
     id: number;
@@ -42,10 +43,10 @@ export default function SiteSettings({
     canManageMembers: boolean;
 }) {
     return (
-        <SiteLayout site={site} title="Settings">
+        <SiteLayout site={site} title={t('Settings')}>
             <section aria-labelledby="settings-heading" className="bg-card max-w-2xl rounded-xl border p-6 shadow-xs">
                 <h2 id="settings-heading" className="mb-5 font-semibold">
-                    Scan settings
+                    {t('Scan settings')}
                 </h2>
                 <SiteForm site={site} />
             </section>
@@ -55,26 +56,26 @@ export default function SiteSettings({
             {canManageMembers && (
                 <section aria-labelledby="danger-heading" className="max-w-2xl rounded-xl border border-red-200 p-6 dark:border-red-900">
                     <h2 id="danger-heading" className="font-semibold text-red-800 dark:text-red-300">
-                        Delete this site
+                        {t('Delete this site')}
                     </h2>
                     <p className="text-muted-foreground mt-1 mb-4 text-sm">
-                        This removes the site with all of its scans, pages and issue history. It cannot be undone.
+                        {t('This removes the site with all of its scans, pages and issue history. It cannot be undone.')}
                     </p>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="destructive">Delete site</Button>
+                            <Button variant="destructive">{t('Delete site')}</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Delete {site.name}?</DialogTitle>
-                                <DialogDescription>All scans and issue history for this site will be permanently deleted.</DialogDescription>
+                                <DialogTitle>{t('Delete {site}?', { site: site.name })}</DialogTitle>
+                                <DialogDescription>{t('All scans and issue history for this site will be permanently deleted.')}</DialogDescription>
                             </DialogHeader>
                             <DialogFooter>
                                 <DialogClose asChild>
-                                    <Button variant="secondary">Cancel</Button>
+                                    <Button variant="secondary">{t('Cancel')}</Button>
                                 </DialogClose>
                                 <Button variant="destructive" onClick={() => router.delete(`/sites/${site.id}`)}>
-                                    Delete permanently
+                                    {t('Delete permanently')}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -95,22 +96,30 @@ function Members({ siteId, workspace, members, canManage }: { siteId: number; wo
     return (
         <section aria-labelledby="members-heading" className="bg-card max-w-2xl rounded-xl border p-6 shadow-xs">
             <h2 id="members-heading" className="font-semibold">
-                Who has access
+                {t('Who has access')}
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
-                Everyone in the{' '}
-                <a href={`/workspaces/${workspace.id}/settings`} className="text-foreground font-medium underline underline-offset-4">
-                    {workspace.name}
-                </a>{' '}
-                workspace ({workspace.people} {workspace.people === 1 ? 'person' : 'people'}) can work on this site.
+                {tRich(
+                    'Everyone in the <link>{workspace}</link> workspace ({count, plural, one {# person} other {# people}}) can work on this site.',
+                    {
+                        workspace: workspace.name,
+                        count: workspace.people,
+                        link: (c: ReactNode) => (
+                            <a href={`/workspaces/${workspace.id}/settings`} className="text-foreground font-medium underline underline-offset-4">
+                                {c}
+                            </a>
+                        ),
+                    },
+                )}
             </p>
-            <h3 className="mt-5 mb-1 text-sm font-semibold">Guests</h3>
+            <h3 className="mt-5 mb-1 text-sm font-semibold">{t('Guests')}</h3>
             <p className="text-muted-foreground mb-3 text-sm">
-                Guests, such as a client's developer, get access to this site only. They can triage issues, fill in the checklist and edit the
-                statement.
+                {t(
+                    "Guests, such as a client's developer, get access to this site only. They can triage issues, fill in the checklist and edit the statement.",
+                )}
             </p>
             {members.length === 0 ? (
-                <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-3 text-sm">No guests yet.</p>
+                <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-3 text-sm">{t('No guests yet.')}</p>
             ) : (
                 <ul className="divide-y rounded-lg border">
                     {members.map((m) => (
@@ -125,10 +134,11 @@ function Members({ siteId, workspace, members, canManage }: { siteId: number; wo
                                     size="sm"
                                     onClick={() => router.delete(`/sites/${siteId}/members/${m.id}`, { preserveScroll: true })}
                                 >
-                                    Remove<span className="sr-only"> {m.name}</span>
+                                    {t('Remove')}
+                                    <span className="sr-only"> {m.name}</span>
                                 </Button>
                             ) : (
-                                <span className="text-muted-foreground text-xs font-medium">Guest</span>
+                                <span className="text-muted-foreground text-xs font-medium">{t('Guest')}</span>
                             )}
                         </li>
                     ))}
@@ -136,7 +146,7 @@ function Members({ siteId, workspace, members, canManage }: { siteId: number; wo
             )}
             {canManage && (
                 <form onSubmit={submit} className="mt-4 grid gap-2">
-                    <Label htmlFor="member-email">Add a guest by email</Label>
+                    <Label htmlFor="member-email">{t('Add a guest by email')}</Label>
                     <div className="flex gap-2">
                         <Input
                             id="member-email"
@@ -147,11 +157,11 @@ function Members({ siteId, workspace, members, canManage }: { siteId: number; wo
                             aria-describedby="member-help"
                         />
                         <Button type="submit" disabled={processing || !data.email}>
-                            Add
+                            {t('Add')}
                         </Button>
                     </div>
                     <p id="member-help" className="text-muted-foreground text-xs">
-                        They need a Curbcut account on this installation first.
+                        {t('They need a Curbcut account on this installation first.')}
                     </p>
                     <InputError message={errors.email} />
                 </form>

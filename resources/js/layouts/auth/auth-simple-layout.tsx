@@ -1,4 +1,6 @@
 import AppLogoIcon from '@/components/app-logo-icon';
+import { LanguageSelect } from '@/components/curbcut/language-select';
+import { t } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
 
 interface AuthLayoutProps {
@@ -18,7 +20,7 @@ export default function AuthSimpleLayout({ children, title, description }: AuthL
                             <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
                                 <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
                             </div>
-                            <span className="sr-only">{title}</span>
+                            <span className="sr-only">{t('Curbcut home page')}</span>
                         </Link>
 
                         <div className="space-y-2 text-center">
@@ -27,6 +29,7 @@ export default function AuthSimpleLayout({ children, title, description }: AuthL
                         </div>
                     </div>
                     {children}
+                    <LanguageSelect className="justify-center" />
                 </div>
             </div>
         </main>

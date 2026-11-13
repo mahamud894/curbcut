@@ -32,6 +32,8 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     canRegister: boolean;
+    locale: string;
+    locales: Record<string, string>;
     workspace: { current: WorkspaceRef; all: WorkspaceRef[] } | null;
     [key: string]: unknown;
 }

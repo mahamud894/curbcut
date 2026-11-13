@@ -1,10 +1,11 @@
+import { t, tk } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export function scoreTone(score: number | null) {
-    if (score === null) return { stroke: 'stroke-muted-foreground/40', text: 'text-muted-foreground', label: 'Not scanned yet' };
-    if (score >= 90) return { stroke: 'stroke-emerald-600', text: 'text-emerald-700 dark:text-emerald-400', label: 'Good' };
-    if (score >= 70) return { stroke: 'stroke-amber-500', text: 'text-amber-700 dark:text-amber-400', label: 'Needs work' };
-    return { stroke: 'stroke-red-600', text: 'text-red-700 dark:text-red-400', label: 'Poor' };
+    if (score === null) return { stroke: 'stroke-muted-foreground/40', text: 'text-muted-foreground', label: tk('Not scanned yet') };
+    if (score >= 90) return { stroke: 'stroke-emerald-600', text: 'text-emerald-700 dark:text-emerald-400', label: tk('Good') };
+    if (score >= 70) return { stroke: 'stroke-amber-500', text: 'text-amber-700 dark:text-amber-400', label: tk('Needs work') };
+    return { stroke: 'stroke-red-600', text: 'text-red-700 dark:text-red-400', label: tk('Poor') };
 }
 
 export function ScoreRing({ score, size = 96, className }: { score: number | null; size?: number; className?: string }) {
@@ -34,7 +35,7 @@ export function ScoreRing({ score, size = 96, className }: { score: number | nul
                     {score ?? '–'}
                 </span>
                 <span className="sr-only">
-                    Accessibility score {score ?? 'not available'} out of 100, {tone.label}
+                    {score === null ? t(tone.label) : t('Accessibility score {score} out of 100, {rating}', { score, rating: t(tone.label) })}
                 </span>
             </span>
         </div>

@@ -5,7 +5,8 @@ import { Stat } from '@/components/curbcut/stat';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
-import { plural, relativeTime } from '@/lib/format';
+import { formatNumber, relativeTime } from '@/lib/format';
+import { t, tk } from '@/lib/i18n';
 import type { SiteSummary } from '@/types/curbcut';
 import { Head, Link } from '@inertiajs/react';
 import { AlertOctagon, Globe, Plus, ShieldCheck, TriangleAlert } from 'lucide-react';
@@ -24,13 +25,13 @@ export default function SitesIndex({ sites, totals }: Props) {
             <DialogTrigger asChild>
                 <Button>
                     <Plus aria-hidden="true" />
-                    Add site
+                    {t('Add site')}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>Add a website</DialogTitle>
-                    <DialogDescription>Curbcut will find its pages and check them against WCAG 2.2 AA.</DialogDescription>
+                    <DialogTitle>{t('Add a website')}</DialogTitle>
+                    <DialogDescription>{t('Curbcut will find its pages and check them against WCAG 2.2 AA.')}</DialogDescription>
                 </DialogHeader>
                 <SiteForm onSuccess={() => setOpen(false)} />
             </DialogContent>
@@ -38,13 +39,13 @@ export default function SitesIndex({ sites, totals }: Props) {
     );
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Sites', href: '/sites' }]}>
-            <Head title="Sites" />
+        <AppLayout breadcrumbs={[{ title: tk('Sites'), href: '/sites' }]}>
+            <Head title={t('Sites')} />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Sites</h1>
-                        <p className="text-muted-foreground text-sm">Accessibility health of every website you monitor.</p>
+                        <h1 className="text-2xl font-bold tracking-tight">{t('Sites')}</h1>
+                        <p className="text-muted-foreground text-sm">{t('Accessibility health of every website you monitor.')}</p>
                     </div>
                     {addDialog}
                 </div>
@@ -56,34 +57,35 @@ export default function SitesIndex({ sites, totals }: Props) {
                         <div className="bg-muted mb-4 rounded-full p-3">
                             <ShieldCheck className="size-6" aria-hidden="true" />
                         </div>
-                        <h2 className="text-lg font-semibold">Add your first website</h2>
+                        <h2 className="text-lg font-semibold">{t('Add your first website')}</h2>
                         <p className="text-muted-foreground mt-1 mb-6 max-w-md text-sm">
-                            Curbcut scans every page with axe-core, tracks what is new and what got fixed, and keeps a history you can show to
-                            auditors.
+                            {t(
+                                'Curbcut scans every page with axe-core, tracks what is new and what got fixed, and keeps a history you can show to auditors.',
+                            )}
                         </p>
                         <Button onClick={() => setOpen(true)}>
                             <Plus aria-hidden="true" />
-                            Add your first site
+                            {t('Add your first site')}
                         </Button>
                     </div>
                 ) : (
                     <>
-                        <section aria-label="Summary" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <Stat label="Sites" value={totals.sites} icon={<Globe className="size-4" aria-hidden="true" />} />
+                        <section aria-label={t('Summary')} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <Stat label={t('Sites')} value={totals.sites} icon={<Globe className="size-4" aria-hidden="true" />} />
                             <Stat
-                                label="Average score"
+                                label={t('Average score')}
                                 value={totals.average_score ?? '–'}
-                                hint="Out of 100, latest scans"
+                                hint={t('Out of 100, latest scans')}
                                 icon={<ShieldCheck className="size-4" aria-hidden="true" />}
                             />
                             <Stat
-                                label="Open issues"
-                                value={totals.open_issues.toLocaleString()}
+                                label={t('Open issues')}
+                                value={formatNumber(totals.open_issues)}
                                 icon={<TriangleAlert className="size-4" aria-hidden="true" />}
                             />
                             <Stat
-                                label="Critical issues"
-                                value={totals.critical.toLocaleString()}
+                                label={t('Critical issues')}
+                                value={formatNumber(totals.critical)}
                                 tone={totals.critical > 0 ? 'text-red-700 dark:text-red-400' : undefined}
                                 icon={<AlertOctagon className="size-4" aria-hidden="true" />}
                             />
@@ -91,7 +93,7 @@ export default function SitesIndex({ sites, totals }: Props) {
 
                         <section aria-labelledby="sites-heading">
                             <h2 id="sites-heading" className="sr-only">
-                                Your sites
+                                {t('Your sites')}
                             </h2>
                             <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                 {sites.map((site) => {
@@ -109,7 +111,7 @@ export default function SitesIndex({ sites, totals }: Props) {
                                                         {site.name}
                                                         {site.shared && (
                                                             <span className="text-muted-foreground ml-2 rounded border px-1.5 py-0.5 align-middle text-xs font-medium">
-                                                                Shared with you
+                                                                {t('Shared with you')}
                                                             </span>
                                                         )}
                                                     </h3>
@@ -117,20 +119,26 @@ export default function SitesIndex({ sites, totals }: Props) {
                                                     <p className="mt-2 text-sm">
                                                         {done ? (
                                                             <>
-                                                                <span className="font-medium">{plural(site.open_issues_count, 'open issue')}</span>
+                                                                <span className="font-medium">
+                                                                    {t('{count, plural, one {# open issue} other {# open issues}}', {
+                                                                        count: site.open_issues_count,
+                                                                    })}
+                                                                </span>
                                                                 {done.critical > 0 && (
                                                                     <span className="text-red-700 dark:text-red-400">
                                                                         {' '}
-                                                                        · {done.critical} critical
+                                                                        · {t('{count} critical', { count: done.critical })}
                                                                     </span>
                                                                 )}
                                                             </>
                                                         ) : (
-                                                            <span className="text-muted-foreground">No completed scan yet</span>
+                                                            <span className="text-muted-foreground">{t('No completed scan yet')}</span>
                                                         )}
                                                     </p>
                                                     <p className="text-muted-foreground mt-1 text-xs">
-                                                        {running ? 'Scan in progress…' : `Scanned ${relativeTime(site.last_scanned_at)}`}
+                                                        {running
+                                                            ? t('Scan in progress…')
+                                                            : t('Scanned {when}', { when: relativeTime(site.last_scanned_at) })}
                                                     </p>
                                                 </div>
                                             </Link>

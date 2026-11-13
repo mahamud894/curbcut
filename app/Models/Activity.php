@@ -40,25 +40,34 @@ class Activity extends Model
     }
 
     /** Plain-language description for reports. */
+    /** A sentence for reports, in the current language. Matches activity-text.tsx in the interface. */
     public function describe(): string
     {
-        $who = $this->user?->name ?? 'Someone';
+        $who = $this->user?->name ?? tr('Someone');
         $p = $this->properties ?? [];
         $status = ['pass' => 'passing', 'fail' => 'failing', 'not_applicable' => 'not applicable', 'not_tested' => 'not tested'];
+        $issue = $p['issue'] ?? '';
 
         return match ($this->action) {
-            'issue.assigned' => ! empty($p['assignee']) ? "{$who} assigned “{$p['issue']}” to {$p['assignee']}" : "{$who} unassigned “{$p['issue']}”",
-            'issue.due_date_changed' => ! empty($p['due_on']) ? "{$who} set the due date of “{$p['issue']}” to {$p['due_on']}" : "{$who} removed the due date of “{$p['issue']}”",
-            'issue.dismissed' => "{$who} dismissed “{$p['issue']}” as ".strtolower((string) ($p['reason'] ?? '')),
-            'issue.restored' => "{$who} reopened “{$p['issue']}”",
-            'issue.commented' => "{$who} commented on “{$p['issue']}”",
-            'checklist.updated' => "{$who} marked {$p['criterion']} {$p['title']} as ".($status[$p['to'] ?? ''] ?? ($p['to'] ?? '')),
-            'statement.updated' => "{$who} edited the accessibility statement",
-            'statement.published' => "{$who} published the accessibility statement",
-            'statement.unpublished' => "{$who} unpublished the accessibility statement",
-            'member.added' => "{$who} gave {$p['member']} access",
-            'member.removed' => "{$who} removed {$p['member']}",
-            'report.generated' => "{$who} downloaded an audit report",
+            'issue.assigned' => ! empty($p['assignee'])
+                ? tr('{who} assigned “{issue}” to {assignee}', ['who' => $who, 'issue' => $issue, 'assignee' => $p['assignee']])
+                : tr('{who} unassigned “{issue}”', ['who' => $who, 'issue' => $issue]),
+            'issue.due_date_changed' => ! empty($p['due_on'])
+                ? tr('{who} set the due date of “{issue}” to {date}', ['who' => $who, 'issue' => $issue, 'date' => $p['due_on']])
+                : tr('{who} removed the due date of “{issue}”', ['who' => $who, 'issue' => $issue]),
+            'issue.dismissed' => tr('{who} dismissed “{issue}”: {reason}', ['who' => $who, 'issue' => $issue, 'reason' => tr((string) ($p['reason'] ?? ''))]),
+            'issue.restored' => tr('{who} reopened “{issue}”', ['who' => $who, 'issue' => $issue]),
+            'issue.commented' => tr('{who} commented on “{issue}”', ['who' => $who, 'issue' => $issue]),
+            'checklist.updated' => tr('{who} marked {criterion} {title} as {status}', [
+                'who' => $who, 'criterion' => $p['criterion'] ?? '', 'title' => tr((string) ($p['title'] ?? '')),
+                'status' => tr($status[$p['to'] ?? ''] ?? (string) ($p['to'] ?? '')),
+            ]),
+            'statement.updated' => tr('{who} edited the accessibility statement', ['who' => $who]),
+            'statement.published' => tr('{who} published the accessibility statement', ['who' => $who]),
+            'statement.unpublished' => tr('{who} unpublished the accessibility statement', ['who' => $who]),
+            'member.added' => tr('{who} gave {member} access', ['who' => $who, 'member' => $p['member'] ?? '']),
+            'member.removed' => tr('{who} removed {member}', ['who' => $who, 'member' => $p['member'] ?? '']),
+            'report.generated' => tr('{who} downloaded an audit report', ['who' => $who]),
             default => "{$who}: {$this->action}",
         };
     }

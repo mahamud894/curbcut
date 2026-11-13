@@ -3,7 +3,8 @@ import { ImpactBadge, impactDot, impactOrder } from '@/components/curbcut/impact
 import { ScoreRing, scoreTone } from '@/components/curbcut/score-ring';
 import { Stat } from '@/components/curbcut/stat';
 import SiteLayout from '@/layouts/site-layout';
-import { formatDate, plural } from '@/lib/format';
+import { capitalize, formatDate, formatDay, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ActivityRow, RuleGroup, ScanSummary, SiteSummary } from '@/types/curbcut';
 import { Link } from '@inertiajs/react';
@@ -23,7 +24,7 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
     const failed = site.latest_scan?.status === 'failed' ? site.latest_scan : null;
 
     return (
-        <SiteLayout site={site} title="Overview">
+        <SiteLayout site={site} title={t('Overview')}>
             {failed && (
                 <div
                     role="alert"
@@ -31,7 +32,7 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                 >
                     <FileWarning className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                     <div>
-                        <p className="font-semibold">The last scan failed.</p>
+                        <p className="font-semibold">{t('The last scan failed.')}</p>
                         <p>{failed.error}</p>
                     </div>
                 </div>
@@ -42,42 +43,47 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                     href={`/sites/${site.id}/issues?assignee=me`}
                     className="w-fit rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900 hover:underline dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100"
                 >
-                    {plural(myOpenIssues, 'open issue')} assigned to you →
+                    {t('{count, plural, one {# open issue} other {# open issues}} assigned to you', { count: myOpenIssues })} →
                 </Link>
             )}
 
             {!scan ? (
                 <div className="text-muted-foreground rounded-xl border border-dashed p-10 text-center text-sm">
-                    Results appear here when the first scan finishes.
+                    {t('Results appear here when the first scan finishes.')}
                 </div>
             ) : (
                 <>
-                    <section aria-label="Latest scan" className="grid gap-4 lg:grid-cols-[minmax(0,320px)_1fr]">
+                    <section aria-label={t('Latest scan')} className="grid gap-4 lg:grid-cols-[minmax(0,320px)_1fr]">
                         <div className="bg-card flex items-center gap-5 rounded-xl border p-5 shadow-xs">
                             <ScoreRing score={scan.score} size={112} />
-                            <div>
-                                <p className="text-muted-foreground text-sm font-medium">Accessibility score</p>
-                                <p className={cn('text-lg font-semibold', scoreTone(scan.score).text)}>{scoreTone(scan.score).label}</p>
+                            <div className="min-w-0">
+                                <p className="text-muted-foreground text-sm font-medium">{t('Accessibility score')}</p>
+                                <p className={cn('text-lg font-semibold break-words hyphens-auto', scoreTone(scan.score).text)}>
+                                    {t(scoreTone(scan.score).label)}
+                                </p>
                                 <p className="text-muted-foreground mt-1 text-xs">
-                                    {plural(scan.pages_scanned, 'page')} scanned {formatDate(scan.finished_at)}
+                                    {t('{count, plural, one {# page} other {# pages}} scanned {when}', {
+                                        count: scan.pages_scanned,
+                                        when: formatDate(scan.finished_at),
+                                    })}
                                 </p>
                             </div>
                         </div>
                         <div className="grid gap-4 sm:grid-cols-3">
                             <Stat
-                                label="Open issues"
-                                value={scan.issues_open.toLocaleString()}
-                                hint={`${scan.critical} critical · ${scan.serious} serious`}
+                                label={t('Open issues')}
+                                value={formatNumber(scan.issues_open)}
+                                hint={t('{critical} critical · {serious} serious', { critical: scan.critical, serious: scan.serious })}
                             />
                             <Stat
-                                label="New in last scan"
-                                value={scan.issues_new.toLocaleString()}
+                                label={t('New in last scan')}
+                                value={formatNumber(scan.issues_new)}
                                 tone={scan.issues_new > 0 ? 'text-red-700 dark:text-red-400' : undefined}
                                 icon={<ArrowUpRight className="size-4" aria-hidden="true" />}
                             />
                             <Stat
-                                label="Fixed in last scan"
-                                value={scan.issues_fixed.toLocaleString()}
+                                label={t('Fixed in last scan')}
+                                value={formatNumber(scan.issues_fixed)}
                                 tone={scan.issues_fixed > 0 ? 'text-emerald-700 dark:text-emerald-400' : undefined}
                                 icon={<ArrowDownRight className="size-4" aria-hidden="true" />}
                             />
@@ -87,7 +93,7 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                     <div className="grid gap-4 lg:grid-cols-2">
                         <section aria-labelledby="impact-heading" className="bg-card rounded-xl border p-5 shadow-xs">
                             <h2 id="impact-heading" className="font-semibold">
-                                Open issues by impact
+                                {t('Open issues by impact')}
                             </h2>
                             <ImpactBar scan={scan} />
                             <ul className="mt-4 grid grid-cols-2 gap-2 text-sm">
@@ -99,7 +105,7 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                                         >
                                             <span className="flex items-center gap-2 capitalize">
                                                 <span className={cn('size-2.5 rounded-full', impactDot[impact])} aria-hidden="true" />
-                                                {impact}
+                                                {t(impact)}
                                             </span>
                                             <span className="font-semibold tabular-nums">{scan[impact]}</span>
                                         </Link>
@@ -110,7 +116,7 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
 
                         <section aria-labelledby="trend-heading" className="bg-card rounded-xl border p-5 shadow-xs">
                             <h2 id="trend-heading" className="font-semibold">
-                                Score over time
+                                {t('Score over time')}
                             </h2>
                             <ScoreTrend history={history} />
                         </section>
@@ -119,15 +125,15 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                     <section aria-labelledby="rules-heading" className="bg-card rounded-xl border shadow-xs">
                         <div className="flex items-center justify-between p-5 pb-3">
                             <h2 id="rules-heading" className="font-semibold">
-                                Most common problems
+                                {t('Most common problems')}
                             </h2>
                             <Link href={`/sites/${site.id}/issues`} className="text-sm font-medium underline-offset-4 hover:underline">
-                                All issues
+                                {t('All issues')}
                             </Link>
                         </div>
                         {topRules.length === 0 ? (
                             <p className="flex items-center gap-2 px-5 pb-5 text-sm text-emerald-700 dark:text-emerald-400">
-                                <CheckCircle2 className="size-4" aria-hidden="true" /> No automatically detectable issues. Nice work!
+                                <CheckCircle2 className="size-4" aria-hidden="true" /> {t('No automatically detectable issues. Nice work!')}
                             </p>
                         ) : (
                             <ul className="divide-y border-t">
@@ -140,7 +146,10 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                                             <ImpactBadge impact={rule.impact} className="w-20 justify-center" />
                                             <span className="min-w-0 flex-1 truncate text-sm">{rule.help}</span>
                                             <span className="text-muted-foreground text-sm whitespace-nowrap tabular-nums">
-                                                {plural(rule.total, 'element')} · {plural(rule.pages, 'page')}
+                                                {t(
+                                                    '{elements, plural, one {# element} other {# elements}} · {pages, plural, one {# page} other {# pages}}',
+                                                    { elements: rule.total, pages: rule.pages },
+                                                )}
                                             </span>
                                         </Link>
                                     </li>
@@ -154,29 +163,29 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
             <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,380px)]">
                 <section aria-labelledby="scans-heading" className="bg-card rounded-xl border shadow-xs">
                     <h2 id="scans-heading" className="p-5 pb-3 font-semibold">
-                        Scan history
+                        {t('Scan history')}
                     </h2>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="text-muted-foreground border-y text-left text-xs uppercase">
                                 <tr>
                                     <th scope="col" className="px-5 py-2 font-medium">
-                                        Started
+                                        {t('Started')}
                                     </th>
                                     <th scope="col" className="px-5 py-2 font-medium">
-                                        Status
+                                        {t('Status')}
                                     </th>
                                     <th scope="col" className="px-5 py-2 text-right font-medium">
-                                        Pages
+                                        {t('Pages')}
                                     </th>
                                     <th scope="col" className="px-5 py-2 text-right font-medium">
-                                        Score
+                                        {t('Score')}
                                     </th>
                                     <th scope="col" className="px-5 py-2 text-right font-medium">
-                                        New
+                                        {t('New')}
                                     </th>
                                     <th scope="col" className="px-5 py-2 text-right font-medium">
-                                        Fixed
+                                        {t('Fixed')}
                                     </th>
                                 </tr>
                             </thead>
@@ -189,11 +198,11 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                                             </Link>
                                             {s.trigger !== 'manual' && (
                                                 <span className="text-muted-foreground ml-2 text-xs">
-                                                    {s.trigger === 'api' ? 'API' : 'scheduled'}
+                                                    {s.trigger === 'api' ? 'API' : t('scheduled')}
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-5 py-2.5 capitalize">{s.status}</td>
+                                        <td className="px-5 py-2.5">{t(capitalize(s.status))}</td>
                                         <td className="px-5 py-2.5 text-right tabular-nums">{s.pages_scanned}</td>
                                         <td className="px-5 py-2.5 text-right tabular-nums">{s.score ?? '–'}</td>
                                         <td className="px-5 py-2.5 text-right tabular-nums">{s.issues_new}</td>
@@ -206,9 +215,9 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                 </section>
                 <section aria-labelledby="activity-heading" className="bg-card rounded-xl border p-5 shadow-xs">
                     <h2 id="activity-heading" className="mb-3 font-semibold">
-                        Recent activity
+                        {t('Recent activity')}
                     </h2>
-                    <ActivityList items={activity} empty="Assignments, checklist results and statement changes appear here." />
+                    <ActivityList items={activity} empty={t('Assignments, checklist results and statement changes appear here.')} />
                 </section>
             </div>
         </SiteLayout>
@@ -230,7 +239,7 @@ function ImpactBar({ scan }: { scan: ScanSummary }) {
 function ScoreTrend({ history }: { history: Props['history'] }) {
     const points = history.filter((h) => h.score !== null);
     if (points.length < 2) {
-        return <p className="text-muted-foreground mt-4 text-sm">The trend appears after the second completed scan.</p>;
+        return <p className="text-muted-foreground mt-4 text-sm">{t('The trend appears after the second completed scan.')}</p>;
     }
     const w = 400;
     const h = 120;
@@ -251,17 +260,17 @@ function ScoreTrend({ history }: { history: Props['history'] }) {
                 className="h-32 w-full"
                 preserveAspectRatio="none"
                 role="img"
-                aria-label={`Score went from ${first} to ${last} over the last ${points.length} scans`}
+                aria-label={t('Score went from {first} to {last} over the last {count} scans', { first, last, count: points.length })}
             >
                 <path d={`${path} L${w},${h} L0,${h} Z`} className="fill-emerald-500/10" />
                 <path d={path} fill="none" strokeWidth="2.5" vectorEffect="non-scaling-stroke" className="stroke-emerald-600" />
             </svg>
             <figcaption className="text-muted-foreground mt-2 flex justify-between text-xs">
-                <span>{points[0].date}</span>
+                <span>{formatDay(points[0].date)}</span>
                 <span>
                     {first} → <span className="text-foreground font-semibold">{last}</span>
                 </span>
-                <span>{points[points.length - 1].date}</span>
+                <span>{formatDay(points[points.length - 1].date)}</span>
             </figcaption>
         </figure>
     );

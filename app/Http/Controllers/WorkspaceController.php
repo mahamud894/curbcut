@@ -50,7 +50,7 @@ class WorkspaceController extends Controller
         $organization = Organization::createFor($request->user(), $data['name']);
         $request->user()->switchTo($organization);
 
-        return to_route('sites.index')->with('success', "Workspace {$organization->name} created.");
+        return to_route('sites.index')->with('success', tr('Workspace {name} created.', ['name' => $organization->name]));
     }
 
     public function switch(Request $request, Organization $organization): RedirectResponse
@@ -78,7 +78,7 @@ class WorkspaceController extends Controller
         abort_unless($organization->isManager($request->user()), 403);
         $organization->update($request->validate(['name' => ['required', 'string', 'max:120']]));
 
-        return back()->with('success', 'Workspace renamed.');
+        return back()->with('success', tr('Workspace renamed.'));
     }
 
     public function addPerson(Request $request, Organization $organization): RedirectResponse
@@ -99,7 +99,7 @@ class WorkspaceController extends Controller
 
         $organization->users()->attach($user, ['role' => $data['role']]);
 
-        return back()->with('success', "{$user->name} joined {$organization->name}.");
+        return back()->with('success', tr('{person} joined {workspace}.', ['person' => $user->name, 'workspace' => $organization->name]));
     }
 
     public function changeRole(Request $request, Organization $organization, User $user): RedirectResponse
@@ -110,12 +110,12 @@ class WorkspaceController extends Controller
         // Admins cannot change owners, and the last owner cannot be demoted.
         abort_if($organization->roleOf($user) === 'owner' && $organization->roleOf($request->user()) !== 'owner', 403);
         if ($organization->roleOf($user) === 'owner' && $data['role'] !== 'owner' && $this->ownerCount($organization) === 1) {
-            return back()->with('error', 'A workspace needs at least one owner.');
+            return back()->with('error', tr('A workspace needs at least one owner.'));
         }
 
         $organization->users()->updateExistingPivot($user->id, ['role' => $data['role']]);
 
-        return back()->with('success', "{$user->name} is now {$data['role']}.");
+        return back()->with('success', tr('{person} is now {role}.', ['person' => $user->name, 'role' => tr(ucfirst($data['role']))]));
     }
 
     public function removePerson(Request $request, Organization $organization, User $user): RedirectResponse
@@ -125,7 +125,7 @@ class WorkspaceController extends Controller
         abort_if(! $self && $organization->roleOf($user) === 'owner' && $organization->roleOf($request->user()) !== 'owner', 403);
 
         if ($organization->roleOf($user) === 'owner' && $this->ownerCount($organization) === 1) {
-            return back()->with('error', 'A workspace needs at least one owner. Make someone else owner first.');
+            return back()->with('error', tr('A workspace needs at least one owner. Make someone else owner first.'));
         }
 
         $organization->users()->detach($user);
@@ -134,20 +134,20 @@ class WorkspaceController extends Controller
             $user->forceFill(['current_organization_id' => null])->save();
         }
 
-        return $self ? to_route('workspaces.index')->with('success', "You left {$organization->name}.") : back()->with('success', "{$user->name} was removed.");
+        return $self ? to_route('workspaces.index')->with('success', tr('You left {workspace}.', ['workspace' => $organization->name])) : back()->with('success', tr('{person} was removed.', ['person' => $user->name]));
     }
 
     public function destroy(Request $request, Organization $organization): RedirectResponse
     {
         abort_unless($organization->roleOf($request->user()) === 'owner', 403);
         if ($request->user()->organizations()->count() <= 1) {
-            return back()->with('error', 'You cannot delete your only workspace.');
+            return back()->with('error', tr('You cannot delete your only workspace.'));
         }
 
-        $request->validate(['confirm' => ['required', 'in:'.$organization->name]], ['confirm.in' => 'Type the workspace name exactly to confirm.']);
+        $request->validate(['confirm' => ['required', 'in:'.$organization->name]], ['confirm.in' => tr('Type the workspace name exactly to confirm.')]);
         $organization->delete();
 
-        return to_route('workspaces.index')->with('success', 'Workspace deleted.');
+        return to_route('workspaces.index')->with('success', tr('Workspace deleted.'));
     }
 
     /** @return list<string> */

@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
-import { plural } from '@/lib/format';
+import { capitalize, formatNumber } from '@/lib/format';
+import { t, tk } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
@@ -34,41 +35,41 @@ export default function Workspaces({ workspaces }: { workspaces: WorkspaceRow[] 
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'All workspaces', href: '/workspaces' }]}>
-            <Head title="All workspaces" />
+        <AppLayout breadcrumbs={[{ title: tk('All workspaces'), href: '/workspaces' }]}>
+            <Head title={t('All workspaces')} />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">All workspaces</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">{t('All workspaces')}</h1>
                         <p className="text-muted-foreground text-sm">
-                            Use one workspace per client or team. This overview shows how each one is doing.
+                            {t('Use one workspace per client or team. This overview shows how each one is doing.')}
                         </p>
                     </div>
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus aria-hidden="true" /> New workspace
+                                <Plus aria-hidden="true" /> {t('New workspace')}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Create a workspace</DialogTitle>
-                                <DialogDescription>For a client or a team. You can invite people to it afterwards.</DialogDescription>
+                                <DialogTitle>{t('Create a workspace')}</DialogTitle>
+                                <DialogDescription>{t('For a client or a team. You can invite people to it afterwards.')}</DialogDescription>
                             </DialogHeader>
                             <form onSubmit={submit} className="grid gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="workspace-name">Name</Label>
+                                    <Label htmlFor="workspace-name">{t('Name')}</Label>
                                     <Input
                                         id="workspace-name"
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
-                                        placeholder="Acme Corporation"
+                                        placeholder={t('Acme Corporation')}
                                         autoFocus
                                     />
                                     <InputError message={errors.name} />
                                 </div>
                                 <Button type="submit" disabled={processing || !data.name.trim()} className="w-fit">
-                                    Create workspace
+                                    {t('Create workspace')}
                                 </Button>
                             </form>
                         </DialogContent>
@@ -79,29 +80,29 @@ export default function Workspaces({ workspaces }: { workspaces: WorkspaceRow[] 
 
                 <div className="bg-card overflow-x-auto rounded-xl border shadow-xs">
                     <table className="w-full text-sm">
-                        <caption className="sr-only">Workspaces with their sites and accessibility health</caption>
+                        <caption className="sr-only">{t('Workspaces with their sites and accessibility health')}</caption>
                         <thead className="text-muted-foreground border-b text-left text-xs uppercase">
                             <tr>
                                 <th scope="col" className="px-4 py-2.5 font-medium">
-                                    Workspace
+                                    {t('Workspace')}
                                 </th>
                                 <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                                    Sites
+                                    {t('Sites')}
                                 </th>
                                 <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                                    Average score
+                                    {t('Average score')}
                                 </th>
                                 <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                                    Lowest score
+                                    {t('Lowest score')}
                                 </th>
                                 <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                                    Open issues
+                                    {t('Open issues')}
                                 </th>
                                 <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                                    Critical
+                                    {t('Critical')}
                                 </th>
                                 <th scope="col" className="px-4 py-2.5 text-right font-medium">
-                                    Overdue
+                                    {t('Overdue')}
                                 </th>
                             </tr>
                         </thead>
@@ -116,8 +117,8 @@ export default function Workspaces({ workspaces }: { workspaces: WorkspaceRow[] 
                                         >
                                             {w.name}
                                         </button>
-                                        <span className="text-muted-foreground block text-xs capitalize">
-                                            {w.role} · {plural(w.people, 'person', 'people')}
+                                        <span className="text-muted-foreground block text-xs">
+                                            {t(capitalize(w.role))} · {t('{count, plural, one {# person} other {# people}}', { count: w.people })}
                                         </span>
                                     </th>
                                     <td className="px-4 py-3 text-right tabular-nums">{w.sites}</td>
@@ -127,7 +128,7 @@ export default function Workspaces({ workspaces }: { workspaces: WorkspaceRow[] 
                                     <td className={cn('px-4 py-3 text-right tabular-nums', scoreTone(w.lowest_score).text)}>
                                         {w.lowest_score ?? '–'}
                                     </td>
-                                    <td className="px-4 py-3 text-right tabular-nums">{w.open_issues.toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right tabular-nums">{formatNumber(w.open_issues)}</td>
                                     <td
                                         className={cn(
                                             'px-4 py-3 text-right tabular-nums',

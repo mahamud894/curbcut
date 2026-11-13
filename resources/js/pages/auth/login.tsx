@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { t } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 
 type LoginForm = {
@@ -38,13 +39,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-        <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
-            <Head title="Log in" />
+        <AuthLayout title={t('Log in to your account')} description={t('Enter your email and password below to log in')}>
+            <Head title={t('Log in')} />
 
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
+                        <Label htmlFor="email">{t('Email address')}</Label>
                         <Input
                             id="email"
                             type="email"
@@ -60,10 +61,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                     <div className="grid gap-2">
                         <div className="flex items-center">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">{t('Password')}</Label>
                             {canResetPassword && (
                                 <TextLink href={route('password.request')} className="ml-auto text-sm">
-                                    Forgot password?
+                                    {t('Forgot password?')}
                                 </TextLink>
                             )}
                         </div>
@@ -74,25 +75,25 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             autoComplete="current-password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Password"
+                            placeholder={t('Password')}
                         />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="flex items-center space-x-3">
                         <Checkbox id="remember" name="remember" />
-                        <Label htmlFor="remember">Remember me</Label>
+                        <Label htmlFor="remember">{t('Remember me')}</Label>
                     </div>
 
                     <Button type="submit" className="mt-4 w-full" disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Log in
+                        {t('Log in')}
                     </Button>
                 </div>
 
                 {canRegister && (
                     <div className="text-muted-foreground text-center text-sm">
-                        Don't have an account? <TextLink href={route('register')}>Sign up</TextLink>
+                        {t("Don't have an account?")} <TextLink href={route('register')}>{t('Sign up')}</TextLink>
                     </div>
                 )}
             </form>

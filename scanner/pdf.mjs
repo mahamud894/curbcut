@@ -53,6 +53,11 @@ async function launch() {
 }
 
 const output = process.argv[2];
+// Footer text such as "Page {page} of {total}", translated by the caller.
+const escapeHtml = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const pageLabel = escapeHtml(process.argv[3] || 'Page {page} of {total}')
+    .replace('{page}', '<span class="pageNumber"></span>')
+    .replace('{total}', '<span class="totalPages"></span>');
 if (!output) {
     process.stderr.write('Usage: node scanner/pdf.mjs output.pdf < report.html\n');
     process.exit(2);
@@ -74,7 +79,9 @@ try {
         displayHeaderFooter: true,
         headerTemplate: '<span></span>',
         footerTemplate:
-            '<div style="width:100%;font-size:8px;color:#555;padding:0 14mm;display:flex;justify-content:space-between;font-family:Arial,sans-serif"><span class="title"></span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>',
+            '<div style="width:100%;font-size:8px;color:#555;padding:0 14mm;display:flex;justify-content:space-between;font-family:Arial,sans-serif"><span class="title"></span><span>' +
+            pageLabel +
+            '</span></div>',
         margin: { top: '16mm', bottom: '18mm', left: '14mm', right: '14mm' },
     });
 } finally {
