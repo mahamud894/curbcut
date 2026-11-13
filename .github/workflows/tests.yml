@@ -45,6 +45,9 @@ jobs:
       - name: Tests
         run: ./vendor/bin/pest
 
+      - name: GitHub Action unit tests
+        run: node --test github-action/lib.test.mjs
+
       - name: Scanner smoke test (real Chrome + axe-core)
         run: |
           python3 -m http.server 8811 --directory tests/fixtures/site &

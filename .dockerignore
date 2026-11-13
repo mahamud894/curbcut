@@ -21,3 +21,5 @@ tests
 .phpunit.result.cache
 docker-compose*.yml
 Dockerfile
+action.yml
+github-action

@@ -187,7 +187,11 @@ export default function SiteShow({ site, history, topRules, recentScans, activit
                                             <Link href={`/sites/${site.id}/scans/${s.id}`} className="font-medium underline-offset-4 hover:underline">
                                                 {formatDate(s.started_at ?? s.created_at)}
                                             </Link>
-                                            {s.trigger === 'scheduled' && <span className="text-muted-foreground ml-2 text-xs">scheduled</span>}
+                                            {s.trigger !== 'manual' && (
+                                                <span className="text-muted-foreground ml-2 text-xs">
+                                                    {s.trigger === 'api' ? 'API' : 'scheduled'}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-5 py-2.5 capitalize">{s.status}</td>
                                         <td className="px-5 py-2.5 text-right tabular-nums">{s.pages_scanned}</td>

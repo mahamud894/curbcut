@@ -26,6 +26,9 @@ return [
     // team has signed up; add people later with `php artisan curbcut:user`.
     'registration' => (bool) env('CURBCUT_REGISTRATION', true),
 
+    // API requests per minute for each user.
+    'api_rate_limit' => (int) env('CURBCUT_API_RATE_LIMIT', 120),
+
     // WCAG tags passed to axe-core.
     'wcag_tags' => ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
 ];

@@ -30,7 +30,8 @@ export default function ScanDetail({ site, scan, newIssues, fixedIssues, failedP
             <div>
                 <h2 className="text-lg font-semibold">Scan #{scan.id}</h2>
                 <p className="text-muted-foreground text-sm">
-                    {formatDate(scan.started_at ?? scan.created_at)} · {scan.trigger === 'scheduled' ? 'Scheduled' : 'Started manually'} ·{' '}
+                    {formatDate(scan.started_at ?? scan.created_at)} ·{' '}
+                    {scan.trigger === 'scheduled' ? 'Scheduled' : scan.trigger === 'api' ? 'Started from the API' : 'Started manually'} ·{' '}
                     <span className="capitalize">{scan.status}</span>
                     {duration !== null && ` · took ${duration}s`}
                 </p>

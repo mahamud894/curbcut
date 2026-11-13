@@ -84,6 +84,11 @@ class Site extends Model
         return $this->hasMany(Scan::class);
     }
 
+    public function checks(): HasMany
+    {
+        return $this->hasMany(Check::class);
+    }
+
     public function issues(): HasMany
     {
         return $this->hasMany(Issue::class);

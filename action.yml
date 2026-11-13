@@ -1,0 +1,50 @@
+name: 'Curbcut accessibility check'
+description: 'Scan a preview deployment with Curbcut and fail the pull request when it adds new WCAG 2.2 accessibility issues.'
+author: 'Mahamud Hassan'
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  curbcut-url:
+    description: 'Address of your Curbcut server, for example https://a11y.example.com'
+    required: true
+  token:
+    description: 'Curbcut API token with the "scan" ability. Store it as a repository secret.'
+    required: true
+  site-id:
+    description: 'ID of the site in Curbcut whose known issues are the baseline (the number in /sites/<id>).'
+    required: true
+  preview-url:
+    description: 'Base address of the deployment to check, for example a pull request preview.'
+    required: true
+  paths:
+    description: 'Pages to check, one path per line (for example "/" and "/checkout"). Defaults to the pages Curbcut knows for the site, most problematic first.'
+    required: false
+    default: ''
+  max-pages:
+    description: 'When no paths are given, how many known pages to check.'
+    required: false
+    default: '25'
+  fail-on:
+    description: 'Fail when a new issue of this impact or worse is found: critical, serious, moderate, minor, or none to never fail.'
+    required: false
+    default: 'serious'
+  timeout-minutes:
+    description: 'How long to wait for the check to finish.'
+    required: false
+    default: '20'
+
+outputs:
+  check-id:
+    description: 'ID of the check in Curbcut.'
+  result:
+    description: '"passed" or "failed".'
+  new-issues:
+    description: 'Number of new issues on the preview.'
+  fixed-issues:
+    description: 'Number of known issues that are gone on the preview.'
+
+runs:
+  using: 'node24'
+  main: 'github-action/index.mjs'

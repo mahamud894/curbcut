@@ -16,6 +16,8 @@ class ReportController extends Controller
     public function show(Request $request, Site $site, SiteReport $report, PdfRenderer $pdf): Response
     {
         $this->authorize('view', $site);
+        // API tokens need the "read" ability; signed-in browser sessions have no token.
+        abort_if($request->user()->currentAccessToken() && ! $request->user()->tokenCan('read'), 403);
         $html = view('reports.site', $report->build($site, $request->user()))->render();
 
         if ($request->query('format') === 'html') {

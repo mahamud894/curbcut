@@ -86,6 +86,47 @@ jobs:
           print('tagged PDF OK')
           PY
 
+      - name: Create an API token
+        id: token
+        run: |
+          t=$(docker compose exec -T app php artisan tinker --execute 'echo App\Models\User::where("email", "ci@example.com")->first()->createToken("ci", ["read", "scan"])->plainTextToken;' | tail -n1 | tr -d '\r')
+          echo "::add-mask::$t"
+          echo "token=$t" >> "$GITHUB_OUTPUT"
+          curl -fsS -H "Authorization: Bearer $t" -H 'Accept: application/json' http://localhost:8080/api/v1/sites/1 | python3 -m json.tool
+
+      - name: Serve a "pull request" copy of the fixture with one new problem
+        run: |
+          mkdir -p /tmp/pr && cp tests/fixtures/site/* /tmp/pr/
+          sed -i 's#</body>#<button class="cart-icon"><svg width="10" height="10"></svg></button></body>#' /tmp/pr/index.html
+          docker run -d --name fixtures-pr --network curbcut_default -v /tmp/pr:/usr/share/nginx/html:ro nginx:alpine
+
+      - name: GitHub Action passes on an unchanged preview
+        id: same
+        uses: ./
+        with:
+          curbcut-url: http://localhost:8080
+          token: ${{ steps.token.outputs.token }}
+          site-id: '1'
+          preview-url: http://fixtures
+
+      - name: GitHub Action fails on a preview with a new problem
+        id: pr
+        continue-on-error: true
+        uses: ./
+        with:
+          curbcut-url: http://localhost:8080
+          token: ${{ steps.token.outputs.token }}
+          site-id: '1'
+          preview-url: http://fixtures-pr
+
+      - name: Check the action results
+        run: |
+          echo "unchanged: ${{ steps.same.outputs.result }} (${{ steps.same.outputs.new-issues }} new)"
+          echo "pull request: ${{ steps.pr.outcome }} (${{ steps.pr.outputs.new-issues }} new)"
+          test "${{ steps.same.outputs.new-issues }}" = "0"
+          test "${{ steps.pr.outcome }}" = "failure"
+          test "${{ steps.pr.outputs.new-issues }}" = "1"
+
       - name: Logs
         if: always()
         run: docker compose logs --no-color --tail=200
