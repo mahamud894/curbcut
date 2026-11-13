@@ -22,11 +22,14 @@ class MemberController extends Controller
         if ($site->hasMember($user)) {
             return back()->withErrors(['email' => "{$user->name} already has access to this site."]);
         }
+        if ($site->organization?->hasUser($user)) {
+            return back()->withErrors(['email' => "{$user->name} is in the {$site->organization->name} workspace and already has access."]);
+        }
 
         $site->members()->attach($user);
         Activity::record($site, $request->user(), 'member.added', $user, ['member' => $user->name]);
 
-        return back()->with('success', "{$user->name} can now work on {$site->name}.");
+        return back()->with('success', "{$user->name} was added as a guest and can now work on {$site->name}.");
     }
 
     public function destroy(Request $request, Site $site, User $user): RedirectResponse

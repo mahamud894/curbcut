@@ -5,7 +5,7 @@ import { relativeTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { SiteSummary } from '@/types/curbcut';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ExternalLink, LoaderCircle, Play } from 'lucide-react';
+import { Download, ExternalLink, LoaderCircle, Play } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 
 const tabs = [
@@ -59,14 +59,22 @@ export default function SiteLayout({ site, title, children }: { site: SiteSummar
                             {site.scan_frequency === 'manual' ? 'Manual scans' : `Scans ${site.scan_frequency}`}
                         </p>
                     </div>
-                    <Button
-                        onClick={() => router.post(`${base}/scans`, {}, { preserveScroll: true })}
-                        disabled={Boolean(active)}
-                        className="shrink-0"
-                    >
-                        {active ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Play aria-hidden="true" />}
-                        {active ? 'Scanning…' : 'Scan now'}
-                    </Button>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                        <Button variant="outline" asChild>
+                            <a href={`${base}/report`} download>
+                                <Download aria-hidden="true" />
+                                Audit report (PDF)
+                            </a>
+                        </Button>
+                        <Button
+                            onClick={() => router.post(`${base}/scans`, {}, { preserveScroll: true })}
+                            disabled={Boolean(active)}
+                            className="shrink-0"
+                        >
+                            {active ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Play aria-hidden="true" />}
+                            {active ? 'Scanning…' : 'Scan now'}
+                        </Button>
+                    </div>
                 </div>
 
                 {active && scan && (

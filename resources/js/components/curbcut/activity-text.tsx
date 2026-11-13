@@ -28,6 +28,8 @@ export function activitySentence(a: ActivityRow): string {
             return `${who} unpublished the accessibility statement`;
         case 'member.added':
             return `${who} gave ${p.member} access`;
+        case 'report.generated':
+            return `${who} downloaded an audit report`;
         case 'member.removed':
             return `${who} removed ${p.member}`;
         default:

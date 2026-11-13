@@ -13,6 +13,7 @@ class SiteFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'organization_id' => fn (array $a) => User::find($a['user_id'])->workspace()->id,
             'name' => fake()->company(),
             'url' => 'https://example.test/',
             'sitemap_url' => null,

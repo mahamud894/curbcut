@@ -22,6 +22,10 @@ return [
     // Turn on for intranet use or local development.
     'allow_private_networks' => (bool) env('CURBCUT_ALLOW_PRIVATE_NETWORKS', false),
 
+    // Allow anyone to create an account from the sign-up page. Turn off once your
+    // team has signed up; add people later with `php artisan curbcut:user`.
+    'registration' => (bool) env('CURBCUT_REGISTRATION', true),
+
     // WCAG tags passed to axe-core.
     'wcag_tags' => ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
 ];

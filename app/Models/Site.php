@@ -19,7 +19,7 @@ class Site extends Model
 
     public const FREQUENCIES = ['manual', 'daily', 'weekly'];
 
-    protected $fillable = ['name', 'url', 'sitemap_url', 'max_pages', 'scan_frequency', 'last_scanned_at'];
+    protected $fillable = ['organization_id', 'name', 'url', 'sitemap_url', 'max_pages', 'scan_frequency', 'last_scanned_at'];
 
     protected function casts(): array
     {
@@ -31,20 +31,32 @@ class Site extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    /** Guests: people outside the workspace who were given access to this one site. */
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withTimestamps();
     }
 
-    /** The owner plus everyone added as a member. */
+    /** Everyone who can work on the site: the workspace's people plus site guests. */
     public function team(): Collection
     {
-        return collect([$this->user])->merge($this->members)->filter()->unique('id')->values();
+        return collect($this->organization?->users ?? [])->merge($this->members)->filter()->unique('id')->sortBy('name')->values();
     }
 
     public function hasMember(User $user): bool
     {
-        return $this->user_id === $user->id || $this->members()->whereKey($user->id)->exists();
+        return ($this->organization?->hasUser($user) ?? false) || $this->members()->whereKey($user->id)->exists();
+    }
+
+    /** Workspace owners and admins can delete the site and manage its guests. */
+    public function isManagedBy(User $user): bool
+    {
+        return $this->organization?->isManager($user) ?? false;
     }
 
     public function checklistItems(): HasMany

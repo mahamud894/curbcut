@@ -4,14 +4,20 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Github, Globe } from 'lucide-react';
+import { BookOpen, Github, Globe, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
+import { WorkspaceSwitcher } from './curbcut/workspace-switcher';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Sites',
         url: '/sites',
         icon: Globe,
+    },
+    {
+        title: 'All workspaces',
+        url: '/workspaces',
+        icon: LayoutGrid,
     },
 ];
 
@@ -41,6 +47,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+                <WorkspaceSwitcher />
             </SidebarHeader>
 
             <SidebarContent>

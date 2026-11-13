@@ -24,14 +24,20 @@ interface Person {
     email: string;
 }
 
+interface WorkspaceInfo {
+    id: number;
+    name: string;
+    people: number;
+}
+
 export default function SiteSettings({
     site,
-    owner,
+    siteWorkspace: workspace,
     members,
     canManageMembers,
 }: {
     site: SiteSummary;
-    owner: Person;
+    siteWorkspace: WorkspaceInfo;
     members: Person[];
     canManageMembers: boolean;
 }) {
@@ -44,7 +50,7 @@ export default function SiteSettings({
                 <SiteForm site={site} />
             </section>
 
-            <Members siteId={site.id} owner={owner} members={members} canManage={canManageMembers} />
+            <Members siteId={site.id} workspace={workspace} members={members} canManage={canManageMembers} />
 
             {canManageMembers && (
                 <section aria-labelledby="danger-heading" className="max-w-2xl rounded-xl border border-red-200 p-6 dark:border-red-900">
@@ -79,7 +85,7 @@ export default function SiteSettings({
     );
 }
 
-function Members({ siteId, owner, members, canManage }: { siteId: number; owner: Person; members: Person[]; canManage: boolean }) {
+function Members({ siteId, workspace, members, canManage }: { siteId: number; workspace: WorkspaceInfo; members: Person[]; canManage: boolean }) {
     const { data, setData, post, processing, errors, reset } = useForm({ email: '' });
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -89,42 +95,48 @@ function Members({ siteId, owner, members, canManage }: { siteId: number; owner:
     return (
         <section aria-labelledby="members-heading" className="bg-card max-w-2xl rounded-xl border p-6 shadow-xs">
             <h2 id="members-heading" className="font-semibold">
-                People with access
+                Who has access
             </h2>
-            <p className="text-muted-foreground mt-1 mb-4 text-sm">
-                Members can triage issues, fill in the checklist and edit the statement. Only the owner can manage access or delete the site.
+            <p className="text-muted-foreground mt-1 text-sm">
+                Everyone in the{' '}
+                <a href={`/workspaces/${workspace.id}/settings`} className="text-foreground font-medium underline underline-offset-4">
+                    {workspace.name}
+                </a>{' '}
+                workspace ({workspace.people} {workspace.people === 1 ? 'person' : 'people'}) can work on this site.
             </p>
-            <ul className="divide-y rounded-lg border">
-                <li className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-                    <span>
-                        <span className="font-medium">{owner.name}</span>
-                        <span className="text-muted-foreground block text-xs">{owner.email}</span>
-                    </span>
-                    <span className="text-muted-foreground text-xs font-medium">Owner</span>
-                </li>
-                {members.map((m) => (
-                    <li key={m.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-                        <span>
-                            <span className="font-medium">{m.name}</span>
-                            <span className="text-muted-foreground block text-xs">{m.email}</span>
-                        </span>
-                        {canManage ? (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => router.delete(`/sites/${siteId}/members/${m.id}`, { preserveScroll: true })}
-                            >
-                                Remove<span className="sr-only"> {m.name}</span>
-                            </Button>
-                        ) : (
-                            <span className="text-muted-foreground text-xs font-medium">Member</span>
-                        )}
-                    </li>
-                ))}
-            </ul>
+            <h3 className="mt-5 mb-1 text-sm font-semibold">Guests</h3>
+            <p className="text-muted-foreground mb-3 text-sm">
+                Guests, such as a client's developer, get access to this site only. They can triage issues, fill in the checklist and edit the
+                statement.
+            </p>
+            {members.length === 0 ? (
+                <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-3 text-sm">No guests yet.</p>
+            ) : (
+                <ul className="divide-y rounded-lg border">
+                    {members.map((m) => (
+                        <li key={m.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+                            <span>
+                                <span className="font-medium">{m.name}</span>
+                                <span className="text-muted-foreground block text-xs">{m.email}</span>
+                            </span>
+                            {canManage ? (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.delete(`/sites/${siteId}/members/${m.id}`, { preserveScroll: true })}
+                                >
+                                    Remove<span className="sr-only"> {m.name}</span>
+                                </Button>
+                            ) : (
+                                <span className="text-muted-foreground text-xs font-medium">Guest</span>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
             {canManage && (
                 <form onSubmit={submit} className="mt-4 grid gap-2">
-                    <Label htmlFor="member-email">Add a person by email</Label>
+                    <Label htmlFor="member-email">Add a guest by email</Label>
                     <div className="flex gap-2">
                         <Input
                             id="member-email"

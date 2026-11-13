@@ -3,8 +3,10 @@
 use App\Http\Controllers\ChecklistController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StatementController;
+use App\Http\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,6 +20,16 @@ Route::get('accessibility-statement/{token}', [StatementController::class, 'publ
 Route::middleware(['auth'])->group(function () {
     Route::redirect('dashboard', '/sites')->name('dashboard');
 
+    Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
+    Route::post('workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
+    Route::post('workspaces/{organization}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
+    Route::get('workspaces/{organization}/settings', [WorkspaceController::class, 'edit'])->name('workspaces.edit');
+    Route::put('workspaces/{organization}', [WorkspaceController::class, 'update'])->name('workspaces.update');
+    Route::delete('workspaces/{organization}', [WorkspaceController::class, 'destroy'])->name('workspaces.destroy');
+    Route::post('workspaces/{organization}/people', [WorkspaceController::class, 'addPerson'])->name('workspaces.people.store');
+    Route::put('workspaces/{organization}/people/{user}', [WorkspaceController::class, 'changeRole'])->name('workspaces.people.update');
+    Route::delete('workspaces/{organization}/people/{user}', [WorkspaceController::class, 'removePerson'])->name('workspaces.people.destroy');
+
     Route::get('sites', [SiteController::class, 'index'])->name('sites.index');
     Route::post('sites', [SiteController::class, 'store'])->name('sites.store');
     Route::get('sites/{site}', [SiteController::class, 'show'])->name('sites.show');
@@ -29,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('sites/{site}/pages', [SiteController::class, 'pages'])->name('sites.pages');
     Route::get('sites/{site}/checklist', [ChecklistController::class, 'index'])->name('sites.checklist');
     Route::put('sites/{site}/checklist/{criterion}', [ChecklistController::class, 'update'])->name('sites.checklist.update');
+    Route::get('sites/{site}/report', [ReportController::class, 'show'])->name('sites.report');
     Route::get('sites/{site}/statement', [StatementController::class, 'edit'])->name('sites.statement');
     Route::put('sites/{site}/statement', [StatementController::class, 'update'])->name('sites.statement.update');
     Route::put('sites/{site}/statement/publish', [StatementController::class, 'publish'])->name('sites.statement.publish');

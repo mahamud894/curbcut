@@ -1,0 +1,57 @@
+# Curbcut — one-command install.
+#
+#   docker compose up -d
+#
+# Then open http://localhost:8080 and create your account.
+# Settings go in a `.env` file next to this one (see docs/configuration.md).
+
+x-curbcut: &curbcut
+  image: ghcr.io/mahamud894/curbcut:latest
+  build: .
+  restart: unless-stopped
+  # Chromium (scans and PDF reports) needs more shared memory than the 64 MB default.
+  shm_size: 1gb
+  environment:
+    APP_URL: ${APP_URL:-http://localhost:8080}
+    APP_KEY: ${APP_KEY:-}
+    CURBCUT_REGISTRATION: ${CURBCUT_REGISTRATION:-true}
+    CURBCUT_ALLOW_PRIVATE_NETWORKS: ${CURBCUT_ALLOW_PRIVATE_NETWORKS:-false}
+    CURBCUT_MAX_PAGES_LIMIT: ${CURBCUT_MAX_PAGES_LIMIT:-500}
+    MAIL_MAILER: ${MAIL_MAILER:-log}
+    MAIL_HOST: ${MAIL_HOST:-}
+    MAIL_PORT: ${MAIL_PORT:-587}
+    MAIL_USERNAME: ${MAIL_USERNAME:-}
+    MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-curbcut@example.com}
+    MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Curbcut}
+    TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+  volumes:
+    - curbcut-data:/data
+
+services:
+  app:
+    <<: *curbcut
+    command: web
+    ports:
+      - "${CURBCUT_PORT:-8080}:80"
+
+  worker:
+    <<: *curbcut
+    command: worker
+    healthcheck:
+      disable: true
+    depends_on:
+      app:
+        condition: service_healthy
+
+  scheduler:
+    <<: *curbcut
+    command: scheduler
+    healthcheck:
+      disable: true
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  curbcut-data:

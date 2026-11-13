@@ -21,10 +21,18 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface WorkspaceRef {
+    id: number;
+    name: string;
+    role?: 'owner' | 'admin' | 'member';
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
+    canRegister: boolean;
+    workspace: { current: WorkspaceRef; all: WorkspaceRef[] } | null;
     [key: string]: unknown;
 }
 

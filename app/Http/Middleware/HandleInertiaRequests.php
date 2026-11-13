@@ -41,10 +41,16 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             ...parent::share($request),
             'name' => config('app.name'),
+            'canRegister' => (bool) config('curbcut.registration'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),
             ],
+            'workspace' => fn () => $request->user() ? [
+                'current' => $request->user()->workspace()->only(['id', 'name']),
+                'all' => $request->user()->organizations()->orderBy('name')->get(['organizations.id', 'organizations.name'])
+                    ->map(fn ($o) => ['id' => $o->id, 'name' => $o->name, 'role' => $o->pivot->role]),
+            ] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

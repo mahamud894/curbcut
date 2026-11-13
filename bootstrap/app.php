@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureRegistrationIsOpen;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        $middleware->alias(['registration' => EnsureRegistrationIsOpen::class]);
+
+        // Docker and most hosting put Curbcut behind a reverse proxy.
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES') ? explode(',', env('TRUSTED_PROXIES')) : null);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -19,15 +19,26 @@ class SiteController extends Controller
 {
     public function index(Request $request): Response
     {
-        $sites = $request->user()->accessibleSites()
-            ->with(['latestScan', 'latestCompletedScan'])
+        $user = $request->user();
+        $workspace = $user->workspace();
+
+        $sites = Site::query()
+            ->where(fn ($q) => $q->where('organization_id', $workspace->id)
+                // Guest access to single sites in workspaces the user doesn't belong to.
+                ->orWhere(fn ($g) => $g->whereHas('members', fn ($m) => $m->whereKey($user->id))
+                    ->whereNotIn('organization_id', $user->organizations()->select('organizations.id'))))
+            ->with(['latestScan', 'latestCompletedScan', 'organization:id,name'])
             ->withCount(['issues as open_issues_count' => fn ($q) => $q->where('status', 'open')])
             ->orderBy('name')
             ->get()
-            ->map(fn (Site $site) => self::summary($site) + ['shared' => $site->user_id !== $request->user()->id]);
+            ->map(fn (Site $site) => self::summary($site) + [
+                'shared' => $site->organization_id !== $workspace->id,
+                'workspace_name' => $site->organization?->name,
+            ]);
 
         return Inertia::render('sites/index', [
             'sites' => $sites,
+            'canAddSites' => true,
             'totals' => [
                 'sites' => $sites->count(),
                 'open_issues' => $sites->sum('open_issues_count'),
@@ -42,7 +53,7 @@ class SiteController extends Controller
     {
         $data = $request->validated();
         $data['url'] = UrlTools::normalize($data['url']);
-        $site = $request->user()->sites()->create($data);
+        $site = $request->user()->sites()->create($data + ['organization_id' => $request->user()->workspace()->id]);
 
         if ($request->boolean('scan_now', true)) {
             $start($site);
@@ -182,8 +193,8 @@ class SiteController extends Controller
         $this->authorize('update', $site);
 
         return Inertia::render('sites/settings', [
-            'site' => self::summary($site->load(['latestScan', 'latestCompletedScan', 'user', 'members'])),
-            'owner' => $site->user->only(['id', 'name', 'email']),
+            'site' => self::summary($site->load(['latestScan', 'latestCompletedScan', 'organization', 'members'])),
+            'siteWorkspace' => ['name' => $site->organization?->name, 'people' => $site->organization?->users()->count() ?? 0, 'id' => $site->organization_id],
             'members' => $site->members->map->only(['id', 'name', 'email']),
             'canManageMembers' => request()->user()->can('manageMembers', $site),
         ]);

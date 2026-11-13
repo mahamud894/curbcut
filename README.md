@@ -7,16 +7,28 @@
 Curbcut scans your websites against WCAG 2.2 AA with [axe-core](https://github.com/dequelabs/axe-core), tracks every issue from the day it appears to the day it is fixed, and keeps that history on your own server.
 
 [![tests](https://github.com/mahamud894/curbcut/actions/workflows/tests.yml/badge.svg)](https://github.com/mahamud894/curbcut/actions/workflows/tests.yml)
+[![docker](https://github.com/mahamud894/curbcut/actions/workflows/docker.yml/badge.svg)](https://github.com/mahamud894/curbcut/actions/workflows/docker.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 ![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![WCAG](https://img.shields.io/badge/WCAG-2.2_AA-0e7490)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
 <img src="docs/screenshots/overview.png" alt="Curbcut site overview with the accessibility score, open issues by impact, the most common problems, scan history and recent team activity" width="900">
 
 </div>
 
-> **Status:** early development. Scanning, issue tracking, the team workflow, the WCAG checklist and accessibility statements work today. See the [roadmap](#roadmap) for what comes next.
+> **Status:** early development, ready to try. Scanning, issue tracking, the team workflow, the WCAG checklist, accessibility statements, PDF audit reports and multi-client workspaces work today. See the [roadmap](#roadmap) for what comes next.
+
+## Quick start
+
+```bash
+git clone https://github.com/mahamud894/curbcut.git
+cd curbcut
+docker compose up -d
+```
+
+Open <http://localhost:8080>, create an account and add a site. That's it: the web app, scan worker and scheduler are all running. See the [Docker guide](docs/docker.md) for settings, HTTPS and backups, or [install without Docker](docs/installation.md).
 
 ## Why Curbcut?
 
@@ -35,17 +47,23 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 - **Accessibility score and trend.** A simple, documented 0–100 score per site and its history over time.
 - **Issue explorer.** Issues grouped by problem and page, filterable by impact, page, status and text, each with the failing element, the WCAG success criterion and how to fix it.
 - **Scheduled scans.** Daily or weekly scans run automatically; manual scans are one click away.
-- **Team workflow.** Add colleagues to a site, assign issues one by one, in bulk or for a whole problem at once, set due dates, discuss in comments and get an email when something is assigned to you.
+- **Team workflow.** Assign issues one by one, in bulk or for a whole problem at once, set due dates, discuss in comments and get an email when something is assigned to you.
 - **Dismiss with a reason.** Mark false positives or accepted risks with a justification. Dismissed issues stay dismissed on later scans and don't count towards the score.
 - **Manual WCAG 2.2 checklist.** All 55 level A and AA success criteria, each with pass, fail or not applicable, notes and evidence, the reviewer and date, links to the W3C Understanding docs, and the open automated issues for that criterion.
 - **Accessibility statement.** Generated from the checklist and the latest scan, following the structure of the EU model statement: conformance status, known limitations, feedback and contact, enforcement procedure and how the site was assessed. Publish it as a public page that updates itself.
-- **Audit trail.** Every assignment, dismissal, comment, checklist result and statement change is recorded with who did it and when.
+- **PDF audit reports.** One click produces a tagged, accessible PDF with the score, conformance status, checklist results, open problems with fixes, dismissed issues and the audit trail, ready to send to a client or an auditor.
+- **Workspaces for teams and agencies.** Group sites into workspaces, one per team or client, with owner, admin and member roles. Switch between them in one click, and see every client's score, critical and overdue issues on one overview. Give a client's developer guest access to a single site.
+- **Audit trail.** Every assignment, dismissal, comment, checklist result, statement change and report download is recorded with who did it and when.
 - **Safe by default.** Private and local network addresses are blocked unless you allow them, to prevent server-side request forgery.
 - **Accessible itself.** Curbcut's own screens are checked with axe-core and pass its WCAG 2.2 AA and best-practice rules.
 
 | Issue list with bulk actions | Issue workflow |
 | --- | --- |
 | <img src="docs/screenshots/issues.png" alt="Issue list grouped by problem, with two issues selected and the bulk assign bar open" width="440"> | <img src="docs/screenshots/issue-workflow.png" alt="A single issue with the failing element, how to fix it, the WCAG criterion, assignee and due date, comments and history" width="440"> |
+
+| All workspaces | PDF audit report |
+| --- | --- |
+| <img src="docs/screenshots/workspaces.png" alt="The All workspaces overview listing each client workspace with its sites, average and lowest score, open, critical and overdue issues" width="440"> | <img src="docs/screenshots/report.png" alt="The first two pages of a PDF audit report: a cover with the score, conformance status and open issues, then the summary" width="440"> |
 
 | WCAG checklist | Public accessibility statement |
 | --- | --- |
@@ -55,7 +73,7 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 
 - [x] **Phase 1 — Scan and track:** site management, page discovery, axe-core scanner, new/fixed comparison, score, dashboard, scheduled scans
 - [x] **Phase 2 — Compliance workflow:** site members, assign issues with due dates and comments, dismiss with justification, manual WCAG 2.2 checklist, accessibility statement generator with a public page, audit trail
-- [ ] **Phase 3 — Ready for teams:** PDF audit reports, organisations and agency mode with many clients, one-command Docker install, documentation site
+- [x] **Phase 3 — Ready for teams:** PDF audit reports, workspaces with roles for teams and agencies, one-command Docker install, documentation
 - [ ] **Phase 4 — Developer workflow:** GitHub Action that fails pull requests on new issues, REST API, optional AI fix suggestions, translations
 
 ## How it works
@@ -87,60 +105,30 @@ The accessibility statement suggests a status from your data:
 
 A criterion with open automated issues counts as failing even if the checklist says it passes. If an external auditor has assessed the site, you can set the status yourself.
 
-## Getting started
+## Documentation
 
-### Requirements
+- [Docker](docs/docker.md): install, settings, updates, backups and HTTPS
+- [Installing without Docker](docs/installation.md): Nginx, systemd and cron, plus the development setup
+- [Configuration](docs/configuration.md): every setting and the `curbcut:user` and `curbcut:scan` commands
+- [User guide](docs/user-guide.md): workspaces and roles, scans, issues, the checklist, statements and reports
 
-- PHP 8.2 or newer with the SQLite (or MySQL/PostgreSQL) extension, and Composer
-- Node.js 20 or newer
-- Google Chrome or Chromium on the machine that runs the queue worker
+### Without Docker, in short
 
-### Install
-
-```bash
-git clone https://github.com/mahamud894/curbcut.git
-cd curbcut
-
-composer install
-npm install
-npm run build
-
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-```
-
-### Run
-
-Curbcut needs three processes: the web app, a queue worker that runs scans, and the scheduler for automatic scans.
+You need PHP 8.2+, Composer, Node.js 20+ and Chrome or Chromium.
 
 ```bash
+composer install && npm install && npm run build
+cp .env.example .env && php artisan key:generate && php artisan migrate
+
 php artisan serve          # web app on http://localhost:8000
 php artisan queue:work     # runs the scans
 php artisan schedule:work  # queues daily and weekly scans
 ```
 
-For development, `composer dev` starts the web server, queue worker, log viewer and Vite together.
-
-Open the app, create an account, click **Add site** and enter a URL. The first scan starts right away.
-
-Assignment emails use Laravel's mail settings (`MAIL_*` in `.env`). By default they are written to the log; configure SMTP to send them for real, and keep the queue worker running so they are delivered.
-
-### Configuration
-
-| Variable | Default | Description |
-| --- | --- | --- |
-| `CURBCUT_ALLOW_PRIVATE_NETWORKS` | `false` | Allow scanning `localhost` and private network addresses, for intranet sites or local development. |
-| `CURBCUT_CHROME_PATH` | auto-detected | Path to Chrome or Chromium if it is not in a standard location. |
-| `CURBCUT_NODE_BINARY` | `node` | Node.js binary used to run the scanner. |
-| `CURBCUT_PAGE_TIMEOUT_MS` | `30000` | Navigation timeout per page. |
-| `CURBCUT_BATCH_SIZE` | `10` | Pages scanned per browser session. |
-| `CURBCUT_MAX_PAGES_LIMIT` | `500` | Hard upper limit on pages per scan. |
-
 ## Development
 
 ```bash
-./vendor/bin/pest      # PHP tests (scan logic, discovery, permissions)
+./vendor/bin/pest      # PHP tests (scanning, workflow, workspaces, reports, permissions)
 npm run lint           # ESLint
 npm run format         # Prettier
 npx tsc --noEmit       # TypeScript
@@ -153,7 +141,7 @@ The scanner can also be run on its own:
 echo '{"urls":["https://example.com/"]}' | node scanner/scan.mjs
 ```
 
-**Tech stack:** Laravel 12, Inertia.js, React 19 with TypeScript, Tailwind CSS 4, Playwright, axe-core, Pest.
+**Tech stack:** Laravel 12, Inertia.js, React 19 with TypeScript, Tailwind CSS 4, Playwright, axe-core, Pest, Docker.
 
 ## Contributing
 

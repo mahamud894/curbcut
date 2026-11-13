@@ -27,7 +27,7 @@ const features = [
 ];
 
 export default function Welcome() {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, canRegister } = usePage<SharedData>().props;
 
     return (
         <>
@@ -50,9 +50,11 @@ export default function Welcome() {
                                 <Link href={route('login')} className="hover:bg-muted rounded-md px-4 py-2 font-medium">
                                     Log in
                                 </Link>
-                                <Link href={route('register')} className="bg-foreground text-background rounded-md px-4 py-2 font-medium">
-                                    Create account
-                                </Link>
+                                {canRegister && (
+                                    <Link href={route('register')} className="bg-foreground text-background rounded-md px-4 py-2 font-medium">
+                                        Create account
+                                    </Link>
+                                )}
                             </>
                         )}
                     </nav>
@@ -68,7 +70,7 @@ export default function Welcome() {
                         </p>
                         <div className="mt-8 flex flex-wrap justify-center gap-3">
                             <Link
-                                href={auth.user ? '/sites' : route('register')}
+                                href={auth.user ? '/sites' : canRegister ? route('register') : route('login')}
                                 className="bg-foreground text-background rounded-md px-5 py-2.5 font-medium"
                             >
                                 {auth.user ? 'Go to your sites' : 'Get started'}
