@@ -67,8 +67,7 @@ ENV APP_NAME=Curbcut \
     CACHE_STORE=database \
     QUEUE_CONNECTION=database \
     CURBCUT_NODE_BINARY=/usr/local/bin/node \
-    CURBCUT_CHROME_PATH=/usr/bin/chromium \
-    HOME=/tmp
+    CURBCUT_CHROME_PATH=/usr/bin/chromium
 
 VOLUME /data
 EXPOSE 80

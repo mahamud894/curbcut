@@ -10,7 +10,9 @@
  * arrive. Diagnostic messages go to stderr.
  */
 import process from 'node:process';
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright-core';
 
@@ -39,15 +41,26 @@ function readStdin() {
 }
 
 async function launchBrowser() {
-    let lastError;
+    // Chrome writes its config and crash reports under $HOME. Give it a private,
+    // writable home so it starts whichever user runs it (web server, queue worker, CLI).
+    const home = mkdtempSync(join(tmpdir(), 'curbcut-chrome-'));
+    process.on('exit', () => rmSync(home, { recursive: true, force: true }));
+    const env = { ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, '.config'), XDG_CACHE_HOME: join(home, '.cache') };
+
+    const errors = [];
     for (const executablePath of CHROME_CANDIDATES) {
+        if (!existsSync(executablePath)) continue;
         try {
-            return await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+            return await chromium.launch({ executablePath, env, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
         } catch (error) {
-            lastError = error;
+            errors.push(`${executablePath}: ${error.message.split('\n').slice(0, 6).join(' ')}`);
         }
     }
-    throw new Error(`Could not start Chrome. Set CURBCUT_CHROME_PATH. Last error: ${lastError?.message}`);
+    throw new Error(
+        errors.length
+            ? `Could not start Chrome. ${errors.join(' | ')}`
+            : `Chrome or Chromium was not found. Install it or set CURBCUT_CHROME_PATH.`,
+    );
 }
 
 function emit(result) {

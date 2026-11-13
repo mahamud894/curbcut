@@ -70,11 +70,21 @@ jobs:
             echo "status=", $scan->status, " pages=", $scan->pages_scanned, " score=", $scan->score, " issues=", $issues, PHP_EOL;
             if ($scan->status !== "completed" || $scan->pages_scanned < 2 || $issues < 4) { exit(1); }'
 
-      - name: PDF report renders inside the container
+      - name: Sign in and download the PDF audit report over HTTP
         run: |
-          echo '<!doctype html><html lang="en"><title>t</title><h1>Report</h1></html>' \
-            | docker compose exec -T --user www-data app node scanner/pdf.mjs /tmp/report.pdf
-          docker compose exec -T app sh -c 'head -c 5 /tmp/report.pdf | grep -q "%PDF-" && ls -l /tmp/report.pdf'
+          jar=$(mktemp)
+          curl -fsS -c "$jar" -b "$jar" http://localhost:8080/login > /dev/null
+          token=$(awk '$6 == "XSRF-TOKEN" { print $7 }' "$jar" | python3 -c 'import sys, urllib.parse; print(urllib.parse.unquote(sys.stdin.read().strip()))')
+          curl -fsS -c "$jar" -b "$jar" -H "X-XSRF-TOKEN: $token" -H 'Accept: text/html' \
+            --data-urlencode email=ci@example.com --data-urlencode password=ci-password-123 \
+            -o /dev/null -w 'login: %{http_code} -> %{redirect_url}\n' http://localhost:8080/login
+          curl -fsS -b "$jar" -o report.pdf -w 'report: %{http_code} %{content_type} %{size_download} bytes\n' http://localhost:8080/sites/1/report
+          head -c 5 report.pdf | grep -q '%PDF-'
+          python3 - <<'PY'
+          data = open('report.pdf', 'rb').read()
+          assert b'/MarkInfo' in data and b'/StructTreeRoot' in data, 'PDF is not tagged'
+          print('tagged PDF OK')
+          PY
 
       - name: Logs
         if: always()

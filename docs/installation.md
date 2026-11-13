@@ -88,7 +88,6 @@ User=www-data
 WorkingDirectory=/var/www/curbcut
 ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=1 --timeout=3600
 Restart=always
-Environment=HOME=/tmp
 
 [Install]
 WantedBy=multi-user.target
