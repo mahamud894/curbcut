@@ -5,7 +5,7 @@ export type Frequency = 'manual' | 'daily' | 'weekly';
 export interface ScanSummary {
     id: number;
     status: ScanStatus;
-    trigger: 'manual' | 'scheduled';
+    trigger: 'manual' | 'scheduled' | 'api';
     pages_total: number;
     pages_scanned: number;
     pages_failed: number;

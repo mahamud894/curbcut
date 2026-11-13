@@ -18,7 +18,7 @@ type Token = { id: number; name: string; abilities: string[]; last_used_at: stri
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'API tokens', href: '/settings/api-tokens' }];
 
 export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[]; newToken: string | null; apiUrl: string }) {
-    const { data, setData, post, processing, errors, reset } = useForm({ name: '', can_scan: false });
+    const { data, setData, post, processing, errors, reset } = useForm<{ name: string; can_scan: boolean }>({ name: '', can_scan: false });
     const [copied, setCopied] = useState(false);
 
     const submit: FormEventHandler = (e) => {
