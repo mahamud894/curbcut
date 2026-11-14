@@ -33,6 +33,14 @@ export function getLocale(): string {
     return current;
 }
 
+/**
+ * The locale for Intl formatting: always Latin digits, so numbers and dates match the
+ * counts shown elsewhere (Bengali would otherwise mix ৪ and 4 on one screen).
+ */
+export function intlLocale(locale: string = current): string {
+    return `${locale}-u-nu-latn`;
+}
+
 export function translate(locale: string, key: string, values?: Values): string {
     const message = dictionaries[locale]?.[key] || key;
     if (!values && !message.includes('{')) return message;
@@ -40,7 +48,7 @@ export function translate(locale: string, key: string, values?: Values): string 
     let formatter = formatters.get(cacheKey);
     if (!formatter) {
         try {
-            formatter = new IntlMessageFormat(message, locale);
+            formatter = new IntlMessageFormat(message, intlLocale(locale));
         } catch {
             return message;
         }
@@ -60,7 +68,7 @@ export function translate(locale: string, key: string, values?: Values): string 
 export function translateRich(locale: string, key: string, values: Record<string, unknown>): ReactNode {
     const message = dictionaries[locale]?.[key] || key;
     try {
-        const parts = new IntlMessageFormat(message, locale).format(values as Record<string, string>);
+        const parts = new IntlMessageFormat(message, intlLocale(locale)).format(values as Record<string, string>);
         return Array.isArray(parts) ? parts.map((part, i) => (isValidElement(part) ? cloneElement(part, { key: i }) : part)) : (parts as ReactNode);
     } catch {
         return message;

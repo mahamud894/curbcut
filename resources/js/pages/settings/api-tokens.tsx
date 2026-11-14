@@ -111,8 +111,8 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
                         ) : (
                             <ul className="divide-y rounded-lg border">
                                 {tokens.map((token) => (
-                                    <li key={token.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                                        <div className="min-w-0">
+                                    <li key={token.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                                        <div className="min-w-0 flex-1">
                                             <p className="truncate font-medium">{token.name}</p>
                                             <p className="text-muted-foreground text-sm">
                                                 {token.abilities.includes('scan') ? t('Read and scan') : t('Read only')} ·{' '}
@@ -122,7 +122,7 @@ export default function ApiTokens({ tokens, newToken, apiUrl }: { tokens: Token[
                                                     : t('never used')}
                                             </p>
                                         </div>
-                                        <Button type="button" variant="outline" size="sm" onClick={() => revoke(token)}>
+                                        <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => revoke(token)}>
                                             {t('Revoke')}
                                             <span className="sr-only"> {token.name}</span>
                                         </Button>

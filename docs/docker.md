@@ -126,12 +126,14 @@ Only do this if you trust everyone who can sign in.
 
 ## Using a prebuilt image
 
-Each push to `main` publishes an image to the GitHub Container Registry. To use it instead of building locally:
+Every release and every push to `main` publishes an image to the GitHub Container Registry. To use it instead of building locally:
 
 ```bash
 docker pull ghcr.io/mahamud894/curbcut:latest
 docker compose up -d --no-build
 ```
+
+`latest` follows `main`. To stay on a release, set the image in `docker-compose.yml` to a version tag such as `ghcr.io/mahamud894/curbcut:v1.0.0`, and see the [changelog](../CHANGELOG.md) before updating.
 
 ## Using MySQL or PostgreSQL
 

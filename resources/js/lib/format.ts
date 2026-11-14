@@ -1,17 +1,17 @@
-import { getLocale, t } from '@/lib/i18n';
+import { intlLocale, t } from '@/lib/i18n';
 
 export function formatDate(iso: string | null | undefined): string {
     if (!iso) return t('Never');
-    return new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+    return new Intl.DateTimeFormat(intlLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
 }
 
 export function formatDay(iso: string | null | undefined): string {
     if (!iso) return '';
-    return new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium' }).format(new Date(iso));
+    return new Intl.DateTimeFormat(intlLocale(), { dateStyle: 'medium' }).format(new Date(iso));
 }
 
 export function formatNumber(n: number): string {
-    return new Intl.NumberFormat(getLocale()).format(n);
+    return new Intl.NumberFormat(intlLocale()).format(n);
 }
 
 export function relativeTime(iso: string | null | undefined): string {
@@ -22,7 +22,7 @@ export function relativeTime(iso: string | null | undefined): string {
         ['hour', 3600],
         ['minute', 60],
     ];
-    const rtf = new Intl.RelativeTimeFormat(getLocale(), { numeric: 'auto' });
+    const rtf = new Intl.RelativeTimeFormat(intlLocale(), { numeric: 'auto' });
     for (const [unit, size] of units) {
         if (Math.abs(seconds) >= size) return rtf.format(Math.round(seconds / size), unit);
     }

@@ -18,7 +18,7 @@ Curbcut scans your websites against WCAG 2.2 AA with [axe-core](https://github.c
 
 </div>
 
-> **Status:** early development, ready to try. Scanning, issue tracking, the team workflow, the WCAG checklist, accessibility statements, PDF audit reports, multi-client workspaces, the REST API, the GitHub Action and 26 languages work today. See the [roadmap](#roadmap) for what comes next.
+> **Status:** [v1.0.0](https://github.com/mahamud894/curbcut/releases/tag/v1.0.0) is out. Scanning, issue tracking, the team workflow, the WCAG checklist, accessibility statements, PDF audit reports, multi-client workspaces, the REST API, the GitHub Action and 26 languages work today. See the [roadmap](#roadmap) for what comes next.
 
 ## Quick start
 
@@ -71,6 +71,10 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 | WCAG checklist | Public accessibility statement |
 | --- | --- |
 | <img src="docs/screenshots/checklist.png" alt="The WCAG 2.2 checklist with progress, filters and pass, fail and not applicable buttons for each success criterion" width="440"> | <img src="docs/screenshots/statement-public.png" alt="The public accessibility statement page listing conformance status, known limitations, contact details and how the site was assessed" width="440"> |
+
+| API tokens for scripts and CI | 26 languages (here in Bengali) |
+| --- | --- |
+| <img src="docs/screenshots/api-tokens.png" alt="The API tokens settings page with a form to create a token that can start scans, and a list of tokens with their access and when each was last used" width="440"> | <img src="docs/screenshots/languages.png" alt="The site overview in Bengali, with the accessibility score, open issues by impact and the most common problems" width="440"> |
 
 ## Roadmap
 
@@ -139,6 +143,7 @@ npm run lint           # ESLint
 npm run format         # Prettier
 npx tsc --noEmit       # TypeScript
 vendor/bin/pint        # PHP code style
+node --test github-action/lib.test.mjs   # GitHub Action
 ```
 
 The scanner can also be run on its own:
@@ -152,6 +157,8 @@ echo '{"urls":["https://example.com/"]}' | node scanner/scan.mjs
 ## Contributing
 
 Bug reports, ideas and pull requests are welcome. Please open an issue first for larger changes so we can agree on the approach. Run the tests and linters above before sending a pull request.
+
+**Translations** are a great first contribution. Curbcut's 26 languages were drafted with machine help, so native speakers who fix wording in `lang/<code>.json` make a real difference. Adding a language is one JSON file and one line in `config/locales.php`; the tests tell you if anything is missing.
 
 If you rely on assistive technology, your feedback on Curbcut's own interface is especially valuable.
 
