@@ -23,7 +23,7 @@ jobs:
     steps:
       # ... deploy your preview here, or wait for your hosting provider's preview ...
 
-      - uses: mahamud894/curbcut@v1
+      - uses: mahamud894/curbcut@v1.0.0
         with:
           curbcut-url: https://a11y.example.com
           token: ${{ secrets.CURBCUT_TOKEN }}
@@ -32,7 +32,7 @@ jobs:
           fail-on: serious
 ```
 
-`@v1` follows the latest 1.x release; pin `@v1.0.0` for an exact version.
+Use the latest [release](https://github.com/mahamud894/curbcut/releases) tag, or `@main` to follow development.
 
 With Vercel, Netlify or another host that posts a deployment status, trigger on `deployment_status` instead and use `${{ github.event.deployment_status.target_url }}` as the `preview-url`.
 
