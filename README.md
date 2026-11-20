@@ -76,6 +76,18 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 | --- | --- |
 | <img src="docs/screenshots/api-tokens.png" alt="The API tokens settings page with a form to create a token that can start scans, and a list of tokens with their access and when each was last used" width="440"> | <img src="docs/screenshots/languages.png" alt="The site overview in Bengali, with the accessibility score, open issues by impact and the most common problems" width="440"> |
 
+## Real-world example
+
+We pointed Curbcut at the [GOV.UK accessibility tool audit](https://alphagov.github.io/accessibility-tool-audit/), a site the UK Government Digital Service built with 142 deliberate accessibility barriers to test checking tools. One scan crawled **152 pages** and found **125 open issues** (26 critical, 99 serious), led by small touch targets, form fields without labels and low colour contrast.
+
+| Site overview | Issues grouped by problem |
+| --- | --- |
+| <img src="docs/screenshots/real-world/overview.png" alt="Curbcut overview of the GOV.UK accessibility tool audit site: score 97, 125 open issues of which 26 critical and 99 serious, and the most common problems" width="440"> | <img src="docs/screenshots/real-world/issues.png" alt="The issue list for the same site, grouped into 19 problems such as form elements without labels and image buttons without alternative text" width="440"> |
+| **One issue with its fix** | **PDF audit report** |
+| <img src="docs/screenshots/real-world/issue-detail.png" alt="Detail of a critical issue: an ol element with the invalid ARIA role breadcrumbs, its HTML, how to fix it and WCAG 4.1.2" width="440"> | <img src="docs/screenshots/real-world/report-cover.png" alt="Cover page of the PDF audit report with score, conformance status, open issues and checklist progress" width="440"> |
+
+Read the full [11-page audit report (PDF)](docs/examples/gov-uk-accessibility-tool-audit-report.pdf). The site was scanned from a local copy of [its source](https://github.com/alphagov/accessibility-tool-audit) (MIT licence), so the address shows 127.0.0.1; the pages are the same as the live site. Most test pages hold one or two problems each, which is why the average score is still high: the issue list, not the score, is what an audit acts on.
+
 ## Roadmap
 
 - [x] **Phase 1 — Scan and track:** site management, page discovery, axe-core scanner, new/fixed comparison, score, dashboard, scheduled scans
