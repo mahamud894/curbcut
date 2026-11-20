@@ -14,7 +14,9 @@ Curbcut scans your websites against WCAG 2.2 AA with [axe-core](https://github.c
 ![WCAG](https://img.shields.io/badge/WCAG-2.2_AA-0e7490)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
-<img src="docs/screenshots/overview.png" alt="Curbcut site overview with the accessibility score, open issues by impact, the most common problems, scan history and recent team activity" width="900">
+<img src="docs/screenshots/real-world/overview.png" alt="Curbcut overview of a real scan of the GOV.UK accessibility tool audit site: 152 pages, 125 open issues of which 26 critical and 99 serious, and the most common problems" width="900">
+
+<sub>A real scan of the <a href="#real-world-example">GOV.UK accessibility tool audit</a> site</sub>
 
 </div>
 
@@ -60,31 +62,17 @@ The name comes from the **curb cut**, the small ramp cut into a pavement kerb. I
 - **Safe by default.** Private and local network addresses are blocked unless you allow them, to prevent server-side request forgery.
 - **Accessible itself.** Curbcut's own screens are checked with axe-core and pass its WCAG 2.2 AA and best-practice rules.
 
-| Issue list with bulk actions | Issue workflow |
-| --- | --- |
-| <img src="docs/screenshots/issues.png" alt="Issue list grouped by problem, with two issues selected and the bulk assign bar open" width="440"> | <img src="docs/screenshots/issue-workflow.png" alt="A single issue with the failing element, how to fix it, the WCAG criterion, assignee and due date, comments and history" width="440"> |
-
-| All workspaces | PDF audit report |
-| --- | --- |
-| <img src="docs/screenshots/workspaces.png" alt="The All workspaces overview listing each client workspace with its sites, average and lowest score, open, critical and overdue issues" width="440"> | <img src="docs/screenshots/report.png" alt="The first two pages of a PDF audit report: a cover with the score, conformance status and open issues, then the summary" width="440"> |
-
-| WCAG checklist | Public accessibility statement |
-| --- | --- |
-| <img src="docs/screenshots/checklist.png" alt="The WCAG 2.2 checklist with progress, filters and pass, fail and not applicable buttons for each success criterion" width="440"> | <img src="docs/screenshots/statement-public.png" alt="The public accessibility statement page listing conformance status, known limitations, contact details and how the site was assessed" width="440"> |
-
-| API tokens for scripts and CI | 26 languages (here in Bengali) |
-| --- | --- |
-| <img src="docs/screenshots/api-tokens.png" alt="The API tokens settings page with a form to create a token that can start scans, and a list of tokens with their access and when each was last used" width="440"> | <img src="docs/screenshots/languages.png" alt="The site overview in Bengali, with the accessibility score, open issues by impact and the most common problems" width="440"> |
-
 ## Real-world example
 
 We pointed Curbcut at the [GOV.UK accessibility tool audit](https://alphagov.github.io/accessibility-tool-audit/), a site the UK Government Digital Service built with 142 deliberate accessibility barriers to test checking tools. One scan crawled **152 pages** and found **125 open issues** (26 critical, 99 serious), led by small touch targets, form fields without labels and low colour contrast.
 
-| Site overview | Issues grouped by problem |
+| Issues grouped by problem | One issue with its fix |
 | --- | --- |
-| <img src="docs/screenshots/real-world/overview.png" alt="Curbcut overview of the GOV.UK accessibility tool audit site: score 97, 125 open issues of which 26 critical and 99 serious, and the most common problems" width="440"> | <img src="docs/screenshots/real-world/issues.png" alt="The issue list for the same site, grouped into 19 problems such as form elements without labels and image buttons without alternative text" width="440"> |
-| **One issue with its fix** | **PDF audit report** |
-| <img src="docs/screenshots/real-world/issue-detail.png" alt="Detail of a critical issue: an ol element with the invalid ARIA role breadcrumbs, its HTML, how to fix it and WCAG 4.1.2" width="440"> | <img src="docs/screenshots/real-world/report-cover.png" alt="Cover page of the PDF audit report with score, conformance status, open issues and checklist progress" width="440"> |
+| <img src="docs/screenshots/real-world/issues.png" alt="The issue list for the site, grouped into 19 problems such as form elements without labels and image buttons without alternative text" width="440"> | <img src="docs/screenshots/real-world/issue-detail.png" alt="Detail of a critical issue: an ol element with the invalid ARIA role breadcrumbs, its HTML, how to fix it and WCAG 4.1.2" width="440"> |
+| **Scanned pages** | **WCAG 2.2 checklist** |
+| <img src="docs/screenshots/real-world/pages.png" alt="The list of scanned pages of the site with the open issues on each" width="440"> | <img src="docs/screenshots/real-world/checklist.png" alt="The WCAG 2.2 A and AA checklist for the site, showing which criteria have open automated issues" width="440"> |
+| **PDF audit report** | |
+| <img src="docs/screenshots/real-world/report-cover.png" alt="Cover page of the PDF audit report with score, conformance status, open issues and checklist progress" width="440"> | |
 
 Read the full [11-page audit report (PDF)](docs/examples/gov-uk-accessibility-tool-audit-report.pdf). The site was scanned from a local copy of [its source](https://github.com/alphagov/accessibility-tool-audit) (MIT licence), so the address shows 127.0.0.1; the pages are the same as the live site. Most test pages hold one or two problems each, which is why the average score is still high: the issue list, not the score, is what an audit acts on.
 
